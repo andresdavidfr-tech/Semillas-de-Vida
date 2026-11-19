@@ -1,0 +1,6 @@
+{
+  "name": "Semillas de Vida — Versión Recobro",
+  "description": "Juego cristiano para niños de 6 a 11 años para memorizar versículos bíblicos de la Versión Recobro (Living Stream Ministry) con niveles y recompensas.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
