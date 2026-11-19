@@ -32,6 +32,8 @@ interface GameplayViewProps {
   onToggleMute: () => void;
   musicEnabled: boolean;
   onToggleMusic: () => void;
+  preferredVoiceURI?: string;
+  onChangePreferredVoice?: (uri?: string) => void;
   onExitToMap: () => void;
   onLevelComplete: (stars: number, seedsEarned: number, accuracy: number) => void;
 }
@@ -73,6 +75,8 @@ export const GameplayView: React.FC<GameplayViewProps> = ({
   onToggleMute,
   musicEnabled,
   onToggleMusic,
+  preferredVoiceURI,
+  onChangePreferredVoice,
   onExitToMap,
   onLevelComplete,
 }) => {
@@ -89,6 +93,19 @@ export const GameplayView: React.FC<GameplayViewProps> = ({
   const [speechLoading, setSpeechLoading] = useState(false);
   const [speechError, setSpeechError] = useState<string | null>(null);
   const [justCheered, setJustCheered] = useState(false);
+  const [spanishVoices, setSpanishVoices] = useState(() => sound.getSpanishVoices());
+
+  useEffect(() => {
+    const syncVoices = () => {
+      setSpanishVoices(sound.getSpanishVoices());
+    };
+    syncVoices();
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.addEventListener?.('voiceschanged', syncVoices);
+      return () => window.speechSynthesis.removeEventListener?.('voiceschanged', syncVoices);
+    }
+    return undefined;
+  }, []);
 
   const parsedWords = useMemo(() => parseVerseWords(level.verseText), [level.verseText]);
 
@@ -548,6 +565,27 @@ export const GameplayView: React.FC<GameplayViewProps> = ({
           </div>
         </section>
 
+        {speechError && (
+          <div className="w-full rounded-2xl bg-amber-50 border border-amber-300 px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-xs font-bold text-amber-950">
+            <span>{speechError}</span>
+            <button
+              type="button"
+              onClick={() => {
+                setSpeechError(null);
+                sound.speakWithFreeNaturalVoice(level.reference, level.verseText, {
+                  characterId: character.id,
+                  ageGroup,
+                  onStart: () => setIsSpeaking(true),
+                  onEnd: () => setIsSpeaking(false),
+                });
+              }}
+              className="px-3 py-1.5 rounded-lg bg-white border border-amber-400 text-amber-950 hover:bg-amber-100 transition-colors cursor-pointer whitespace-nowrap"
+            >
+              Escuchar con voz gratuita
+            </button>
+          </div>
+        )}
+
         {/* PHASE 0: INTRO READ */}
         {phase === 'INTRO_READ' && (
           <div className="w-full bg-white rounded-3xl border-2 border-[#1B4332]/15 shadow-sm overflow-hidden animate-gentle-pop">
@@ -578,12 +616,6 @@ export const GameplayView: React.FC<GameplayViewProps> = ({
                 {level.kidNote}
               </p>
 
-              {speechError && (
-                <p className="text-xs font-bold text-red-700 bg-red-50 border border-red-200 rounded-xl px-4 py-2 max-w-md mx-auto">
-                  {speechError}
-                </p>
-              )}
-
               <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
                 <button
                   type="button"
@@ -610,6 +642,30 @@ export const GameplayView: React.FC<GameplayViewProps> = ({
                   <span>¡Listo! Empezar a Memorizar</span>
                 </button>
               </div>
+
+              {spanishVoices.length > 0 && onChangePreferredVoice && (
+                <div className="pt-1 flex flex-wrap items-center justify-center gap-2 text-xs text-[#1A2E22]/70">
+                  <label htmlFor="voice-select" className="font-semibold">
+                    Voz gratuita:
+                  </label>
+                  <select
+                    id="voice-select"
+                    value={preferredVoiceURI ?? ''}
+                    onChange={(e) => {
+                      const val = e.target.value || undefined;
+                      onChangePreferredVoice(val);
+                    }}
+                    className="bg-[#FBF9F2] border border-[#1B4332]/20 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-[#1B4332] max-w-[260px] cursor-pointer"
+                  >
+                    <option value="">Automática (Mejor voz en español)</option>
+                    {spanishVoices.map((v) => (
+                      <option key={v.voiceURI} value={v.voiceURI}>
+                        {v.name} ({v.lang})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
           </div>
         )}

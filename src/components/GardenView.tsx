@@ -282,9 +282,28 @@ export const GardenView: React.FC<GardenViewProps> = ({ save, onBack, onPlayLeve
                     {selectedLevel.kidNote}
                   </p>
                   {speechError && (
-                    <p className="text-xs font-bold text-red-700 bg-red-50 border border-red-200 rounded-xl px-4 py-2">
-                      {speechError}
-                    </p>
+                    <div className="text-xs font-bold text-red-800 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 space-y-2">
+                      <p>{speechError}</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSpeechError(null);
+                          sound.speakWithFreeNaturalVoice(
+                            selectedLevel.reference,
+                            selectedLevel.verseText,
+                            {
+                              characterId: character.id,
+                              ageGroup: save.ageGroup,
+                              onStart: () => setIsSpeaking(true),
+                              onEnd: () => setIsSpeaking(false),
+                            }
+                          );
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-white border border-red-300 text-red-900 hover:bg-red-100 transition-colors cursor-pointer"
+                      >
+                        Escuchar con voz gratuita
+                      </button>
+                    </div>
                   )}
                   <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                     <button

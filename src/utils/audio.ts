@@ -1,4 +1,4 @@
-import { CharacterId } from '../data/characters';
+import { CharacterId, getCharacterById } from '../data/characters';
 import { AgeGroup } from '../data/verses';
 
 export type MusicMood = 'menu' | 'play' | 'victory';
@@ -10,6 +10,13 @@ export interface SpeakOptions {
   onStart?: () => void;
   onEnd?: () => void;
   onError?: (message: string) => void;
+}
+
+export interface SpanishVoiceOption {
+  voiceURI: string;
+  name: string;
+  lang: string;
+  isNatural: boolean;
 }
 
 const BOOK_SPOKEN_NAMES: Record<string, string> = {
@@ -29,22 +36,37 @@ export function formatReferenceForSpeech(reference: string): string {
   return `${book}, capítulo ${chapter}, versículo ${verse}.`;
 }
 
-// Peaceful uplifting progression in C Major / F Lydian warmth (4 bars x 8 eighth-note steps = 32 steps)
-const CHORD_BASS = [
-  130.81, // C3
-  110.0, // A2
-  87.31, // F2
-  98.0, // G2
-];
+function scoreSpanishVoice(v: SpeechSynthesisVoice): number {
+  const name = v.name.toLowerCase();
+  const lang = v.lang.toLowerCase();
+  let score = 0;
+
+  if (lang.startsWith('es')) score += 50;
+  if (lang.includes('419') || lang.includes('mx') || lang.includes('us') || lang.includes('es')) {
+    score += 10;
+  }
+  if (/natural|neural|online/i.test(name)) score += 100;
+  if (/google/i.test(name)) score += 65;
+  if (/dalia|paulina|sabina|helena|luciana|monica|mónica|camila|sofia|sofía|valentina|elena|laura|paloma|salome|salomé/i.test(name)) {
+    score += 45;
+  }
+  if (/enhanced|premium|siri/i.test(name)) score += 55;
+  if (/espeak|mbrola/i.test(name)) score -= 80;
+  if (!v.localService && /microsoft|google/i.test(name)) score += 20;
+
+  return score;
+}
+
+// Peaceful uplifting progression in C Major / F Lydian warmth
+const CHORD_BASS = [130.81, 110.0, 87.31, 98.0];
 
 const CHORD_PADS: number[][] = [
-  [261.63, 329.63, 392.0, 493.88], // Cmaj7
-  [220.0, 261.63, 329.63, 392.0], // Am7
-  [174.61, 261.63, 329.63, 440.0], // Fmaj7
-  [196.0, 293.66, 329.63, 493.88], // G6
+  [261.63, 329.63, 392.0, 493.88],
+  [220.0, 261.63, 329.63, 392.0],
+  [174.61, 261.63, 329.63, 440.0],
+  [196.0, 293.66, 329.63, 493.88],
 ];
 
-// Gentle marimba melody notes (0 = rest) across 32 eighth-note steps
 const MENU_ARPEGGIO: number[] = [
   523.25, 0, 659.25, 783.99, 659.25, 0, 987.77, 783.99,
   440.0, 0, 523.25, 659.25, 783.99, 0, 659.25, 523.25,
@@ -52,7 +74,6 @@ const MENU_ARPEGGIO: number[] = [
   392.0, 0, 587.33, 659.25, 783.99, 0, 659.25, 587.33,
 ];
 
-// Slightly livelier stimulating marimba groove during active gameplay
 const PLAY_ARPEGGIO: number[] = [
   523.25, 659.25, 783.99, 659.25, 987.77, 783.99, 659.25, 783.99,
   440.0, 523.25, 659.25, 523.25, 783.99, 659.25, 523.25, 659.25,
@@ -61,10 +82,10 @@ const PLAY_ARPEGGIO: number[] = [
 ];
 
 const BELL_ACCENTS: Record<number, number> = {
-  0: 1046.5, // C6
-  8: 880.0, // A5
-  16: 1318.51, // E6
-  24: 1174.66, // D6
+  0: 1046.5,
+  8: 880.0,
+  16: 1318.51,
+  24: 1174.66,
 };
 
 class SoundManager {
@@ -81,6 +102,44 @@ class SoundManager {
   private currentAudio: HTMLAudioElement | null = null;
   private audioCache = new Map<string, string>();
   private abortController: AbortController | null = null;
+  private serverTtsAvailable: boolean | null = null;
+  private preferredVoiceURI: string | undefined = undefined;
+  private cachedVoices: SpeechSynthesisVoice[] = [];
+  private speechSessionId = 0;
+
+  constructor() {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      const refresh = () => {
+        this.cachedVoices = window.speechSynthesis.getVoices();
+      };
+      refresh();
+      window.speechSynthesis.addEventListener?.('voiceschanged', refresh);
+    }
+  }
+
+  public setPreferredVoiceURI(uri?: string): void {
+    this.preferredVoiceURI = uri;
+  }
+
+  public getSpanishVoices(): SpanishVoiceOption[] {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      return [];
+    }
+    const raw =
+      this.cachedVoices.length > 0
+        ? this.cachedVoices
+        : window.speechSynthesis.getVoices();
+
+    return raw
+      .filter((v) => v.lang.toLowerCase().startsWith('es'))
+      .sort((a, b) => scoreSpanishVoice(b) - scoreSpanishVoice(a))
+      .map((v) => ({
+        voiceURI: v.voiceURI,
+        name: v.name.replace(/\s*\(Natural\)/i, ' (Natural)'),
+        lang: v.lang,
+        isNatural: /natural|neural|online|google|enhanced|premium/i.test(v.name),
+      }));
+  }
 
   public setMuted(muted: boolean): void {
     this.muted = muted;
@@ -192,37 +251,28 @@ class SoundManager {
     const bar = Math.floor(step / 8);
     const beatInBar = step % 8;
 
-    // 1. Warm sustained pad + bass at the start of every 8-step bar
     if (beatInBar === 0) {
       const padFreqs = CHORD_PADS[bar];
       const padDuration = this.musicMood === 'play' ? 2.15 : 2.6;
-
-      // Soft warm bass root
       this.playMusicVoice(CHORD_BASS[bar], 'sine', 0.055, 0.08, padDuration * 0.9, now);
-
-      // Gentle felt pad chord
       for (const freq of padFreqs) {
         this.playMusicVoice(freq, 'triangle', 0.015, 0.25, padDuration, now, 950);
       }
     }
 
-    // 2. Marimba / Kalimba arpeggio note
     const pattern = this.musicMood === 'play' ? PLAY_ARPEGGIO : MENU_ARPEGGIO;
     const noteFreq = pattern[step];
     if (noteFreq > 0) {
       const vol = this.musicMood === 'play' ? 0.042 : 0.036;
       this.playMusicVoice(noteFreq, 'sine', vol, 0.01, 0.34, now);
-      // Soft marimba 2nd harmonic warmth
       this.playMusicVoice(noteFreq * 2, 'sine', vol * 0.18, 0.006, 0.14, now);
     }
 
-    // 3. Soft celesta sparkle accent on bar boundaries
     const bellFreq = BELL_ACCENTS[step];
     if (bellFreq) {
       this.playMusicVoice(bellFreq, 'sine', 0.016, 0.01, 0.7, now);
     }
 
-    // 4. Gentle woodblock/pulse on off-beats during active gameplay to stimulate focus
     if (this.musicMood === 'play' && (beatInBar === 2 || beatInBar === 6)) {
       this.playWoodTick(now);
     }
@@ -339,6 +389,25 @@ class SoundManager {
     });
   }
 
+  private async checkServerTtsAvailable(): Promise<boolean> {
+    if (this.serverTtsAvailable !== null) {
+      return this.serverTtsAvailable;
+    }
+    try {
+      const res = await fetch('/api/tts', { method: 'GET' });
+      if (!res.ok) {
+        this.serverTtsAvailable = false;
+        return false;
+      }
+      const data = (await res.json().catch(() => ({}))) as { available?: boolean };
+      this.serverTtsAvailable = Boolean(data.available);
+      return this.serverTtsAvailable;
+    } catch {
+      this.serverTtsAvailable = false;
+      return false;
+    }
+  }
+
   public async speakVerse(
     reference: string,
     verseText: string,
@@ -357,6 +426,19 @@ class SoundManager {
     const spokenReference = formatReferenceForSpeech(reference);
     const fullText = `${spokenReference} ${verseText}`;
     const cacheKey = `${charId}:${ageGroup}:${fullText}`;
+
+    // If user explicitly picked a local browser voice, use free browser natural voice directly
+    if (this.preferredVoiceURI) {
+      this.speakWithFreeNaturalVoice(reference, verseText, options);
+      return;
+    }
+
+    const hasServerTts = await this.checkServerTtsAvailable();
+    if (!hasServerTts) {
+      // 100% Free zero-key path (ideal for Vercel without GEMINI_API_KEY)
+      this.speakWithFreeNaturalVoice(reference, verseText, options);
+      return;
+    }
 
     const playDataUrl = async (dataUrl: string) => {
       const audio = new Audio(dataUrl);
@@ -377,8 +459,7 @@ class SoundManager {
           this.currentAudio = null;
         }
         this.setMusicDucked(false);
-        options?.onEnd?.();
-        options?.onError?.('No se pudo reproducir el audio del versículo.');
+        this.speakWithFreeNaturalVoice(reference, verseText, options);
       };
       await audio.play();
     };
@@ -389,8 +470,7 @@ class SoundManager {
         await playDataUrl(cachedUrl);
       } catch {
         this.setMusicDucked(false);
-        options?.onEnd?.();
-        options?.onError?.('No se pudo reproducir el audio.');
+        this.speakWithFreeNaturalVoice(reference, verseText, options);
       }
       return;
     }
@@ -415,13 +495,14 @@ class SoundManager {
       const payload = (await res.json().catch(() => ({}))) as {
         audioBase64?: string;
         mimeType?: string;
-        error?: string;
+        available?: boolean;
       };
 
       if (!res.ok || !payload.audioBase64) {
-        throw new Error(
-          payload.error || 'No se pudo obtener la narración natural del servidor.'
-        );
+        if (payload.available === false) {
+          this.serverTtsAvailable = false;
+        }
+        throw new Error('Fallback to free voice');
       }
 
       const mimeType = payload.mimeType || 'audio/wav';
@@ -441,12 +522,8 @@ class SoundManager {
         options?.onEnd?.();
         return;
       }
-      const message =
-        err instanceof Error
-          ? err.message
-          : 'Error al conectar con el servicio de voz natural.';
-      options?.onEnd?.();
-      options?.onError?.(message);
+      // Seamlessly use the free natural Spanish voice when server TTS isn't available
+      this.speakWithFreeNaturalVoice(reference, verseText, options);
     } finally {
       if (this.abortController === controller) {
         this.abortController = null;
@@ -454,7 +531,96 @@ class SoundManager {
     }
   }
 
+  public speakWithFreeNaturalVoice(
+    reference: string,
+    verseText: string,
+    options?: SpeakOptions
+  ): boolean {
+    if (this.muted || typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      options?.onEnd?.();
+      options?.onError?.('Tu navegador no tiene lectura de voz disponible.');
+      return false;
+    }
+
+    try {
+      window.speechSynthesis.cancel();
+      const session = ++this.speechSessionId;
+      const voices =
+        this.cachedVoices.length > 0
+          ? this.cachedVoices
+          : window.speechSynthesis.getVoices();
+
+      const spanishVoices = voices
+        .filter((v) => v.lang.toLowerCase().startsWith('es'))
+        .sort((a, b) => scoreSpanishVoice(b) - scoreSpanishVoice(a));
+
+      const chosenVoice =
+        (this.preferredVoiceURI
+          ? spanishVoices.find((v) => v.voiceURI === this.preferredVoiceURI)
+          : undefined) || spanishVoices[0];
+
+      const character = getCharacterById(options?.characterId ?? 'lamb');
+      const isNaturalNeural = chosenVoice
+        ? /natural|neural|online|google|siri/i.test(chosenVoice.name)
+        : false;
+
+      // Neural voices already sound bright; pitch ~1.04-1.08 keeps them natural without distortion
+      const pitch = isNaturalNeural ? 1.05 : Math.min(character.voicePitch, 1.14);
+      const rate = options?.ageGroup === 'young' ? 0.88 : 0.94;
+
+      const spokenReference = formatReferenceForSpeech(reference);
+      // Split verse into expressive natural clauses so browser TTS pauses naturally at punctuation
+      const clauses = verseText
+        .split(/(?<=[,;:.!?])\s+/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      const segments = [spokenReference, ...clauses];
+
+      this.setMusicDucked(true);
+      options?.onStart?.();
+
+      const speakNext = (idx: number) => {
+        if (session !== this.speechSessionId || this.muted) {
+          this.setMusicDucked(false);
+          return;
+        }
+        if (idx >= segments.length) {
+          this.setMusicDucked(false);
+          options?.onEnd?.();
+          return;
+        }
+
+        const utterance = new SpeechSynthesisUtterance(segments[idx]);
+        utterance.lang = chosenVoice?.lang || 'es-ES';
+        if (chosenVoice) utterance.voice = chosenVoice;
+        utterance.rate = idx === 0 ? Math.min(rate + 0.04, 1.0) : rate;
+        utterance.pitch = pitch;
+
+        utterance.onend = () => {
+          if (session !== this.speechSessionId) return;
+          window.setTimeout(() => speakNext(idx + 1), idx === 0 ? 220 : 120);
+        };
+        utterance.onerror = () => {
+          if (session !== this.speechSessionId) return;
+          this.setMusicDucked(false);
+          options?.onEnd?.();
+        };
+
+        window.speechSynthesis.speak(utterance);
+      };
+
+      speakNext(0);
+      return true;
+    } catch {
+      this.setMusicDucked(false);
+      options?.onEnd?.();
+      return false;
+    }
+  }
+
   public stopSpeech(): void {
+    this.speechSessionId++;
     this.setMusicDucked(false);
     if (this.abortController) {
       this.abortController.abort();
@@ -468,6 +634,13 @@ class SoundManager {
         // ignore audio stop errors
       }
       this.currentAudio = null;
+    }
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch {
+        // ignore speech cancel errors
+      }
     }
   }
 }

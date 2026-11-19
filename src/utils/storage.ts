@@ -12,6 +12,7 @@ export interface SaveData {
   characterId: CharacterId;
   muted: boolean;
   musicEnabled: boolean;
+  preferredVoiceURI?: string;
   totalSeeds: number;
   completedLevels: Record<string, LevelProgress>;
   unlockedAllPractice: boolean;
@@ -24,6 +25,7 @@ const DEFAULT_SAVE: SaveData = {
   characterId: 'lamb',
   muted: false,
   musicEnabled: true,
+  preferredVoiceURI: undefined,
   totalSeeds: 0,
   completedLevels: {},
   unlockedAllPractice: false,
@@ -45,6 +47,10 @@ export function loadSaveData(): SaveData {
       characterId: charId,
       muted: Boolean(parsed.muted),
       musicEnabled: parsed.musicEnabled !== false,
+      preferredVoiceURI:
+        typeof parsed.preferredVoiceURI === 'string'
+          ? parsed.preferredVoiceURI
+          : undefined,
       totalSeeds: typeof parsed.totalSeeds === 'number' ? parsed.totalSeeds : 0,
       completedLevels:
         parsed.completedLevels && typeof parsed.completedLevels === 'object'

@@ -35,6 +35,7 @@ export default function App() {
   useEffect(() => {
     sound.setMuted(save.muted);
     sound.setMusicEnabled(save.musicEnabled);
+    sound.setPreferredVoiceURI(save.preferredVoiceURI);
     persistSaveData(save);
   }, [save]);
 
@@ -88,6 +89,11 @@ export default function App() {
       sound.playTap();
       return { ...prev, musicEnabled: nextMusic };
     });
+  }, []);
+
+  const handleChangePreferredVoice = useCallback((preferredVoiceURI?: string) => {
+    sound.setPreferredVoiceURI(preferredVoiceURI);
+    setSave((prev) => ({ ...prev, preferredVoiceURI }));
   }, []);
 
   const handleTogglePracticeAll = useCallback(() => {
@@ -229,6 +235,8 @@ export default function App() {
         onToggleMute={handleToggleMute}
         musicEnabled={save.musicEnabled}
         onToggleMusic={handleToggleMusic}
+        preferredVoiceURI={save.preferredVoiceURI}
+        onChangePreferredVoice={handleChangePreferredVoice}
         onExitToMap={() => setScreen('WORLD_MAP')}
         onLevelComplete={handleLevelComplete}
       />
