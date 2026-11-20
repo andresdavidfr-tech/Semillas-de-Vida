@@ -62,7 +62,7 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({ save, onCl
             return (
               <div
                 key={ach.id}
-                className={`rounded-2xl border-2 p-4 flex items-start gap-4 transition-all ${
+                className={`rounded-2xl border-2 p-5 flex flex-col items-center text-center gap-3 transition-all ${
                   unlocked
                     ? 'bg-white border-amber-400 shadow-sm'
                     : 'bg-[#F3EFE2] border-[#1B4332]/10'
@@ -74,11 +74,12 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({ save, onCl
                   unlocked={unlocked}
                   size="md"
                 />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
+                <div className="w-full min-w-0">
+                  <div className="flex items-center justify-center gap-2 flex-wrap">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800">
                       Medalla {TIER_LABEL[ach.tier]}
                     </span>
+                    <span aria-hidden="true" className="text-stone-300">·</span>
                     {unlocked ? (
                       <span className="inline-flex items-center gap-1 text-xs font-extrabold text-emerald-700">
                         <CheckCircle2 className="w-3.5 h-3.5" />
@@ -91,7 +92,7 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({ save, onCl
                       </span>
                     )}
                   </div>
-                  <h3 className="font-display text-lg font-bold text-[#1B4332] mt-0.5">
+                  <h3 className="font-display text-lg font-bold text-[#1B4332] mt-1">
                     {ach.title}
                   </h3>
                   <p className="text-xs text-[#1A2E22]/75 leading-snug mt-1">

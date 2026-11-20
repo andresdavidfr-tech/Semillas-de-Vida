@@ -38,42 +38,86 @@ function base64ToBlobUrl(base64: string, mimeType: string): string {
   return URL.createObjectURL(blob);
 }
 
-// Peaceful uplifting progression in C Major / F Lydian warmth (4 bars x 8 eighth-notes = 32 steps)
-const CHORD_BASS = [130.81, 110.0, 87.31, 98.0]; // C3, A2, F2, G2
+// Sunny, cheerful & slow progression in C Major (8 bars x 8 eighth-notes = 64 steps)
+// Pure major & add9 chords: C - G - F - C - F - C - G - C
+const CHORD_BASS = [
+  130.81, // C3
+  98.0,   // G2
+  87.31,  // F2
+  130.81, // C3
+  87.31,  // F2
+  130.81, // C3
+  98.0,   // G2
+  130.81, // C3
+];
 
 const CHORD_PADS: number[][] = [
-  [261.63, 329.63, 392.0, 493.88], // Cmaj7
-  [220.0, 261.63, 329.63, 392.0], // Am7
-  [174.61, 261.63, 329.63, 440.0], // Fmaj7
-  [196.0, 293.66, 329.63, 493.88], // G6
+  [261.63, 329.63, 392.0, 587.33], // Cadd9
+  [196.0, 246.94, 293.66, 392.0],  // G
+  [174.61, 220.0, 261.63, 392.0],  // Fadd9
+  [261.63, 329.63, 392.0, 523.25], // C
+  [174.61, 220.0, 261.63, 329.63], // Fmaj7 (bright warmth)
+  [261.63, 329.63, 392.0, 587.33], // Cadd9
+  [196.0, 246.94, 293.66, 329.63], // G6
+  [261.63, 329.63, 392.0, 523.25], // C
 ];
 
-const MENU_ARPEGGIO: number[] = [
-  523.25, 0, 659.25, 783.99, 659.25, 0, 987.77, 783.99,
-  440.0, 0, 523.25, 659.25, 783.99, 0, 659.25, 523.25,
-  349.23, 0, 440.0, 523.25, 659.25, 0, 880.0, 659.25,
-  392.0, 0, 587.33, 659.25, 783.99, 0, 659.25, 587.33,
+const MENU_MELODY: number[] = [
+  // Bar 1 (C): alegre y suave
+  523.25, 0, 659.25, 783.99, 1046.5, 0, 783.99, 659.25,
+  // Bar 2 (G)
+  587.33, 0, 783.99, 987.77, 783.99, 0, 659.25, 587.33,
+  // Bar 3 (F)
+  523.25, 0, 698.46, 880.0, 783.99, 0, 698.46, 659.25,
+  // Bar 4 (C): respiro dulce
+  783.99, 0, 659.25, 0, 523.25, 0, 659.25, 0,
+  // Bar 5 (F)
+  698.46, 0, 880.0, 1046.5, 880.0, 0, 698.46, 659.25,
+  // Bar 6 (C)
+  783.99, 0, 659.25, 783.99, 1046.5, 0, 783.99, 659.25,
+  // Bar 7 (G)
+  587.33, 0, 783.99, 880.0, 987.77, 0, 783.99, 587.33,
+  // Bar 8 (C): cierre feliz y tranquilo
+  659.25, 0, 783.99, 0, 523.25, 0, 0, 0,
 ];
 
-const PLAY_ARPEGGIO: number[] = [
-  523.25, 659.25, 783.99, 659.25, 987.77, 783.99, 659.25, 783.99,
-  440.0, 523.25, 659.25, 523.25, 783.99, 659.25, 523.25, 659.25,
-  349.23, 440.0, 523.25, 659.25, 880.0, 659.25, 523.25, 659.25,
-  392.0, 587.33, 659.25, 783.99, 987.77, 783.99, 659.25, 587.33,
+const PLAY_MELODY: number[] = [
+  // Bar 1 (C): juguetona pero lenta y amable
+  523.25, 659.25, 783.99, 0, 1046.5, 783.99, 659.25, 783.99,
+  // Bar 2 (G)
+  587.33, 783.99, 987.77, 0, 783.99, 659.25, 587.33, 659.25,
+  // Bar 3 (F)
+  523.25, 698.46, 880.0, 0, 783.99, 698.46, 659.25, 587.33,
+  // Bar 4 (C)
+  659.25, 783.99, 523.25, 0, 659.25, 783.99, 659.25, 0,
+  // Bar 5 (F)
+  698.46, 880.0, 1046.5, 0, 880.0, 783.99, 698.46, 659.25,
+  // Bar 6 (C)
+  783.99, 659.25, 1046.5, 0, 783.99, 659.25, 523.25, 659.25,
+  // Bar 7 (G)
+  587.33, 783.99, 987.77, 0, 880.0, 783.99, 659.25, 587.33,
+  // Bar 8 (C)
+  523.25, 659.25, 783.99, 0, 1046.5, 0, 783.99, 0,
 ];
 
-const VICTORY_ARPEGGIO: number[] = [
-  523.25, 659.25, 783.99, 1046.5, 987.77, 783.99, 659.25, 783.99,
-  440.0, 523.25, 659.25, 880.0, 783.99, 659.25, 523.25, 659.25,
-  349.23, 440.0, 523.25, 880.0, 783.99, 659.25, 523.25, 659.25,
-  392.0, 587.33, 783.99, 987.77, 1046.5, 987.77, 783.99, 659.25,
+const VICTORY_MELODY: number[] = [
+  // Celebración alegre, cálida y serena
+  523.25, 659.25, 783.99, 1046.5, 987.77, 783.99, 1046.5, 0,
+  587.33, 783.99, 987.77, 1174.66, 987.77, 783.99, 659.25, 0,
+  523.25, 698.46, 880.0, 1046.5, 880.0, 698.46, 659.25, 0,
+  783.99, 1046.5, 1318.51, 0, 1046.5, 783.99, 659.25, 0,
+  698.46, 880.0, 1046.5, 1318.51, 1046.5, 880.0, 698.46, 0,
+  523.25, 659.25, 783.99, 1046.5, 783.99, 659.25, 523.25, 0,
+  587.33, 783.99, 987.77, 1174.66, 987.77, 783.99, 659.25, 587.33,
+  523.25, 659.25, 783.99, 1046.5, 0, 783.99, 523.25, 0,
 ];
 
 const BELL_ACCENTS: Record<number, number> = {
   0: 1046.5,
-  8: 880.0,
-  16: 1318.51,
-  24: 1174.66,
+  16: 1396.91,
+  32: 1760.0,
+  48: 1567.98,
+  56: 1046.5,
 };
 
 function scheduleOfflineVoice(
@@ -121,27 +165,6 @@ function scheduleOfflineVoice(
   osc.stop(startTime + duration + 0.04);
 }
 
-function scheduleOfflineWoodTick(
-  offline: OfflineAudioContext,
-  destination: AudioNode,
-  startTime: number
-): void {
-  const osc = offline.createOscillator();
-  const gain = offline.createGain();
-  osc.type = 'triangle';
-  osc.frequency.setValueAtTime(430, startTime);
-  osc.frequency.exponentialRampToValueAtTime(195, startTime + 0.045);
-
-  gain.gain.setValueAtTime(0.0001, startTime);
-  gain.gain.linearRampToValueAtTime(0.028, startTime + 0.004);
-  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.065);
-
-  osc.connect(gain);
-  gain.connect(destination);
-  osc.start(startTime);
-  osc.stop(startTime + 0.08);
-}
-
 async function renderAmbientLoopBuffer(
   sampleRate: number,
   mood: MusicMood
@@ -150,10 +173,11 @@ async function renderAmbientLoopBuffer(
     return null;
   }
 
-  const stepSec = mood === 'play' ? 0.28 : mood === 'victory' ? 0.30 : 0.34;
-  const totalSteps = 32;
+  // Slower, relaxed and gentle cheerful tempo (~65-72 BPM)
+  const stepSec = mood === 'play' ? 0.42 : mood === 'victory' ? 0.40 : 0.46;
+  const totalSteps = 64;
   const loopDuration = stepSec * totalSteps;
-  const tailOverlapSec = 2.0;
+  const tailOverlapSec = 2.4;
   const renderLength = Math.ceil((loopDuration + tailOverlapSec) * sampleRate);
   const loopSamples = Math.round(loopDuration * sampleRate);
 
@@ -163,49 +187,54 @@ async function renderAmbientLoopBuffer(
   master.connect(offline.destination);
 
   const pattern =
-    mood === 'play' ? PLAY_ARPEGGIO : mood === 'victory' ? VICTORY_ARPEGGIO : MENU_ARPEGGIO;
+    mood === 'play' ? PLAY_MELODY : mood === 'victory' ? VICTORY_MELODY : MENU_MELODY;
 
   for (let step = 0; step < totalSteps; step++) {
     const t = step * stepSec;
     const bar = Math.floor(step / 8);
     const beatInBar = step % 8;
 
+    // Warm, velvety chord pad + bass at the start of every bar
     if (beatInBar === 0) {
       const padFreqs = CHORD_PADS[bar];
-      const padDuration = stepSec * 8 * 0.96;
-      scheduleOfflineVoice(offline, master, CHORD_BASS[bar], 'sine', 0.09, 0.12, padDuration, t, 0);
+      const padDuration = stepSec * 8 * 0.98;
+      scheduleOfflineVoice(offline, master, CHORD_BASS[bar], 'sine', 0.085, 0.18, padDuration, t, 0);
       padFreqs.forEach((freq, idx) => {
-        const pan = idx % 2 === 0 ? -0.22 : 0.22;
-        scheduleOfflineVoice(offline, master, freq, 'triangle', 0.024, 0.32, padDuration, t, pan, 900);
+        const pan = idx % 2 === 0 ? -0.24 : 0.24;
+        scheduleOfflineVoice(offline, master, freq, 'triangle', 0.022, 0.45, padDuration, t, pan, 780);
       });
     }
 
+    // Gentle sunny harp/pizzicato harmonic pulse on beat 5 of each bar
+    if (beatInBar === 4) {
+      const fifthFreq = CHORD_PADS[bar][2];
+      scheduleOfflineVoice(offline, master, fifthFreq, 'sine', 0.024, 0.025, 0.65, t, -0.18);
+    }
+
+    // Main cheerful marimba / celesta melody with soft echo
     const noteFreq = pattern[step];
     if (noteFreq > 0) {
-      const vol = mood === 'play' ? 0.068 : 0.056;
-      const pan = ((step % 4) - 1.5) * 0.16;
-      scheduleOfflineVoice(offline, master, noteFreq, 'sine', vol, 0.012, 0.42, t, pan);
-      scheduleOfflineVoice(offline, master, noteFreq * 2, 'sine', vol * 0.2, 0.008, 0.18, t, -pan);
+      const vol = mood === 'play' ? 0.062 : 0.056;
+      const pan = ((step % 4) - 1.5) * 0.14;
+      scheduleOfflineVoice(offline, master, noteFreq, 'sine', vol, 0.018, 0.68, t, pan);
+      scheduleOfflineVoice(offline, master, noteFreq * 2, 'sine', vol * 0.18, 0.012, 0.28, t, -pan);
       scheduleOfflineVoice(
         offline,
         master,
         noteFreq,
         'sine',
-        vol * 0.26,
-        0.015,
-        0.34,
+        vol * 0.22,
+        0.02,
+        0.48,
         t + stepSec * 1.5,
-        -pan * 0.8
+        -pan * 0.75
       );
     }
 
+    // Bright celesta bell twinkle
     const bellFreq = BELL_ACCENTS[step];
     if (bellFreq) {
-      scheduleOfflineVoice(offline, master, bellFreq, 'sine', 0.025, 0.014, 0.85, t, 0.15);
-    }
-
-    if (mood === 'play' && (beatInBar === 2 || beatInBar === 6)) {
-      scheduleOfflineWoodTick(offline, master, t);
+      scheduleOfflineVoice(offline, master, bellFreq, 'sine', 0.022, 0.018, 1.15, t, 0.16);
     }
   }
 

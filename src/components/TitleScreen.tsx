@@ -86,7 +86,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
           className="w-full h-full object-cover object-center"
         />
         <div
-          className="absolute inset-0 bg-gradient-to-r from-[#FBF9F2]/96 via-[#FBF9F2]/88 to-[#FBF9F2]/30 md:via-[#FBF9F2]/80 md:to-transparent"
+          className="absolute inset-0 bg-gradient-to-b from-[#FBF9F2]/94 via-[#FBF9F2]/88 to-[#FBF9F2]/75"
           aria-hidden="true"
         />
         <div
@@ -96,7 +96,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
       </div>
 
       {/* Top Minimal Floating Controls */}
-      <header className="relative z-10 flex items-center justify-between px-6 sm:px-10 pt-5 gap-3 flex-wrap">
+      <header className="relative z-10 w-full max-w-6xl mx-auto flex items-center justify-between px-6 sm:px-10 pt-5 gap-3 flex-wrap">
         <div className="flex items-center gap-2 text-sm font-semibold text-[#1B4332]">
           <BookOpen className="w-4 h-4 text-amber-700" aria-hidden="true" />
           <span>Semillas de Vida</span>
@@ -156,13 +156,13 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
       </header>
 
       {/* Main Hero Lockup + Companion Selector + Achievements Section */}
-      <main className="relative z-10 flex-1 flex items-center px-6 sm:px-10 md:px-16 py-6">
-        <div className="max-w-3xl w-full space-y-5">
+      <main className="relative z-10 flex-1 flex items-center justify-center px-6 sm:px-10 py-6">
+        <div className="max-w-2xl w-full mx-auto flex flex-col items-center text-center space-y-5">
           {/* Bespoke Inline SVG Title Lockup */}
-          <div>
+          <div className="flex flex-col items-center">
             <svg
               viewBox="0 0 460 112"
-              className="w-full max-w-[380px] h-auto"
+              className="w-full max-w-[380px] h-auto mx-auto"
               role="img"
               aria-label="Semillas de Vida"
             >
@@ -206,18 +206,18 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                 Vida
               </text>
             </svg>
-            <p className="text-base sm:text-lg text-[#1A2E22] font-medium leading-relaxed mt-1 max-w-lg text-balance">
+            <p className="text-base sm:text-lg text-[#1A2E22] font-medium leading-relaxed mt-1 max-w-lg mx-auto text-center text-balance">
               Elige a tu amigo de aventura para aprender, ordenar y atesorar versículos de la Biblia.
             </p>
           </div>
 
           {/* Character Companion Selector */}
-          <div className="bg-white/92 rounded-2xl p-4 border border-[#1B4332]/15 shadow-sm max-w-xl">
-            <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="bg-white/92 rounded-2xl p-4 border border-[#1B4332]/15 shadow-sm w-full max-w-xl mx-auto">
+            <div className="flex flex-wrap items-center justify-center gap-2 mb-3">
               <span className="text-xs font-bold tracking-wide text-[#1B4332]">
-                Elige tu personaje compañero
+                Elige tu personaje compañero:
               </span>
-              <span className="text-xs font-semibold text-amber-800">
+              <span className="text-xs font-extrabold text-amber-800">
                 {selectedCharacter.name}
               </span>
             </div>
@@ -249,13 +249,13 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
               })}
             </div>
 
-            <p className="text-xs text-[#1A2E22]/75 mt-3 font-medium">
+            <p className="text-xs text-[#1A2E22]/75 mt-3 font-medium text-center">
               “{selectedCharacter.tagline}”
             </p>
           </div>
 
           {/* Primary Play CTAs: Standard + Picture-Only Mode */}
-          <div className="flex flex-wrap items-center gap-3.5">
+          <div className="flex flex-wrap items-center justify-center gap-3.5">
             <button
               type="button"
               onClick={onStart}
@@ -273,20 +273,20 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
               <Images className="w-5 h-5" aria-hidden="true" />
               <span>Solo Imágenes (Sin leer)</span>
             </button>
-
-            {totalStars > 0 && (
-              <div className="text-sm font-bold text-[#1B4332] font-mono tabular-nums">
-                ★ {totalStars} / {maxStars} estrellas
-              </div>
-            )}
           </div>
+
+          {totalStars > 0 && (
+            <div className="text-sm font-bold text-[#1B4332] font-mono tabular-nums text-center">
+              ★ {totalStars} / {maxStars} estrellas
+            </div>
+          )}
 
           {/* Main Menu Section: Logros y Medallas */}
           <section
             aria-label="Sección de Logros y Medallas"
-            className="bg-white/92 rounded-2xl p-4 border border-[#1B4332]/15 shadow-sm max-w-xl"
+            className="bg-white/92 rounded-2xl p-4 border border-[#1B4332]/15 shadow-sm w-full max-w-xl mx-auto"
           >
-            <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
               <div className="flex items-center gap-2">
                 <Award className="w-4 h-4 text-amber-600" aria-hidden="true" />
                 <span className="text-xs font-extrabold uppercase tracking-wider text-[#1B4332]">
@@ -303,7 +303,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
               </button>
             </div>
 
-            <div className="grid grid-cols-4 gap-2.5">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               {ACHIEVEMENTS.slice(0, 4).map((ach) => {
                 const unlocked = isAchievementUnlocked(ach, save);
                 return (
@@ -336,7 +336,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
       </main>
 
       {/* Single Flat Control-Hint Line */}
-      <footer className="relative z-10 px-6 sm:px-10 pb-4 pt-2 flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm font-medium text-white/95">
+      <footer className="relative z-10 w-full max-w-6xl mx-auto px-6 sm:px-10 pb-4 pt-2 flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-center text-xs sm:text-sm font-medium text-white/95">
         <span>Toca las palabras o dibujos · Enter Iniciar · H Pista · M Sonido</span>
         <span className="text-white/80">12 Niveles · 8 Medallas · Modo Solo Imágenes</span>
       </footer>

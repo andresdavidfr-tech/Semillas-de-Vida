@@ -507,7 +507,7 @@ export const GameplayView: React.FC<GameplayViewProps> = ({
           aria-label="Compañero animando el nivel"
           className={`w-full rounded-2xl border-2 p-3.5 sm:px-5 sm:py-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 ${character.bgTint} ${character.borderTint}`}
         >
-          <div className="flex items-center gap-3.5 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row items-center text-center sm:text-left gap-3.5 w-full sm:w-auto">
             <CharacterAvatar characterId={character.id} mood={avatarMood} size="sm" />
             <div className="flex-1">
               <div className="text-[11px] font-bold uppercase tracking-wider text-[#1B4332]/75">
@@ -563,7 +563,7 @@ export const GameplayView: React.FC<GameplayViewProps> = ({
                 className="w-full h-full object-cover object-center"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent" />
-              <div className="absolute bottom-4 left-6 right-6 flex items-baseline justify-between text-white">
+              <div className="absolute bottom-4 left-6 right-6 flex items-baseline justify-center text-center text-white">
                 <span className="font-display text-2xl sm:text-3xl font-bold">
                   {level.reference}
                 </span>
@@ -612,14 +612,14 @@ export const GameplayView: React.FC<GameplayViewProps> = ({
         {/* PHASE 1 & PHASE 3: FILL IN THE BLANKS */}
         {(phase === 'STEP_1_BLANKS' || phase === 'STEP_3_MEMORY') && (
           <div className="w-full space-y-6 animate-gentle-pop">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-col items-center text-center gap-3">
               <div>
                 <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#1B4332]">
                   {phase === 'STEP_1_BLANKS'
                     ? 'Paso 1: Completa las palabras'
                     : 'Paso 3: ¡Desafío de Memoria!'}
                 </h2>
-                <p className="text-sm text-[#1A2E22]/75">
+                <p className="text-sm text-[#1A2E22]/75 mt-1">
                   {phase === 'STEP_1_BLANKS'
                     ? 'Toca las palabras de abajo para llenar cada espacio brillante.'
                     : 'Cuidado: hay 2 palabras extra. ¡Elige solo las del versículo!'}
@@ -630,7 +630,7 @@ export const GameplayView: React.FC<GameplayViewProps> = ({
                 type="button"
                 onClick={handleHint}
                 disabled={stageDone}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-100 hover:bg-amber-200 disabled:opacity-40 text-amber-950 font-bold text-sm transition-colors cursor-pointer whitespace-nowrap"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-100 hover:bg-amber-200 disabled:opacity-40 text-amber-950 font-bold text-sm transition-colors cursor-pointer whitespace-nowrap"
               >
                 <Lightbulb className="w-4 h-4 text-amber-700" />
                 <span>Pista (H)</span>
@@ -638,8 +638,8 @@ export const GameplayView: React.FC<GameplayViewProps> = ({
             </div>
 
             {/* Verse Board */}
-            <div className="bg-white rounded-3xl border-2 border-[#1B4332]/15 p-6 sm:p-9 shadow-sm">
-              <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-4 font-display text-xl sm:text-2xl leading-relaxed text-[#1A2E22]">
+            <div className="bg-white rounded-3xl border-2 border-[#1B4332]/15 p-6 sm:p-9 shadow-sm text-center">
+              <div className="flex flex-wrap items-baseline justify-center gap-x-2.5 gap-y-4 font-display text-xl sm:text-2xl leading-relaxed text-[#1A2E22]">
                 {parsedWords.map((pw) => {
                   const isBlank = activeBlankIndices.includes(pw.index);
                   if (!isBlank) {
@@ -666,7 +666,7 @@ export const GameplayView: React.FC<GameplayViewProps> = ({
                   );
                 })}
               </div>
-              <div className="mt-5 text-xs font-mono font-bold text-[#1B4332]/65">
+              <div className="mt-5 text-xs font-mono font-bold text-[#1B4332]/65 text-center">
                 {level.reference}
               </div>
             </div>
@@ -726,22 +726,22 @@ export const GameplayView: React.FC<GameplayViewProps> = ({
         {/* PHASE 2: ORDER THE VERSE */}
         {phase === 'STEP_2_ORDER' && (
           <div className="w-full space-y-6 animate-gentle-pop">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-col items-center text-center gap-3">
               <div>
                 <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#1B4332]">
                   Paso 2: Ordena el Versículo
                 </h2>
-                <p className="text-sm text-[#1A2E22]/75">
+                <p className="text-sm text-[#1A2E22]/75 mt-1">
                   Toca las piezas en el orden correcto desde el principio hasta el final.
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center gap-2">
                 <button
                   type="button"
                   onClick={initOrderStage}
                   disabled={stageDone || placedOrderTokens.length === 0}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-stone-200/80 hover:bg-stone-200 disabled:opacity-40 text-stone-800 font-bold text-sm transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-stone-200/80 hover:bg-stone-200 disabled:opacity-40 text-stone-800 font-bold text-sm transition-colors cursor-pointer"
                 >
                   <RotateCcw className="w-4 h-4" />
                   <span>Reiniciar</span>
@@ -750,7 +750,7 @@ export const GameplayView: React.FC<GameplayViewProps> = ({
                   type="button"
                   onClick={handleHint}
                   disabled={stageDone}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-100 hover:bg-amber-200 disabled:opacity-40 text-amber-950 font-bold text-sm transition-colors cursor-pointer whitespace-nowrap"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-100 hover:bg-amber-200 disabled:opacity-40 text-amber-950 font-bold text-sm transition-colors cursor-pointer whitespace-nowrap"
                 >
                   <Lightbulb className="w-4 h-4 text-amber-700" />
                   <span>Pista (H)</span>
@@ -758,8 +758,8 @@ export const GameplayView: React.FC<GameplayViewProps> = ({
               </div>
             </div>
 
-            <div className="bg-white rounded-3xl border-2 border-[#1B4332]/15 p-6 sm:p-8 min-h-[145px] shadow-sm flex flex-col justify-between">
-              <div className="flex flex-wrap items-center gap-2.5">
+            <div className="bg-white rounded-3xl border-2 border-[#1B4332]/15 p-6 sm:p-8 min-h-[145px] shadow-sm flex flex-col justify-between text-center">
+              <div className="flex flex-wrap items-center justify-center gap-2.5">
                 {placedOrderTokens.map((txt, idx) => (
                   <span
                     key={`${txt}-${idx}`}
@@ -774,7 +774,7 @@ export const GameplayView: React.FC<GameplayViewProps> = ({
                   </span>
                 )}
               </div>
-              <div className="mt-5 text-xs font-mono font-bold text-[#1B4332]/65">
+              <div className="mt-5 text-xs font-mono font-bold text-[#1B4332]/65 text-center">
                 {level.reference}
               </div>
             </div>

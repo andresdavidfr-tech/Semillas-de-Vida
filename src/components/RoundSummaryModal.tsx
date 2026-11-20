@@ -89,8 +89,8 @@ export const RoundSummaryModal: React.FC<RoundSummaryModalProps> = ({
 
         {/* Newly Unlocked Medals Banner */}
         {newlyUnlockedAchievements.length > 0 && (
-          <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-400 rounded-2xl p-4 space-y-3 text-left">
-            <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-amber-900">
+          <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-400 rounded-2xl p-4 space-y-3 text-center">
+            <div className="flex items-center justify-center gap-2 text-xs font-extrabold uppercase tracking-wider text-amber-900">
               <Award className="w-4 h-4 text-amber-600" />
               <span>
                 {newlyUnlockedAchievements.length === 1
@@ -98,9 +98,9 @@ export const RoundSummaryModal: React.FC<RoundSummaryModalProps> = ({
                   : '¡Nuevas Medallas Desbloqueadas!'}
               </span>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {newlyUnlockedAchievements.map((ach) => (
-                <div key={ach.id} className="flex items-center gap-3">
+                <div key={ach.id} className="flex flex-col items-center gap-1.5">
                   <AchievementBadge
                     iconKey={ach.iconKey}
                     tier={ach.tier}

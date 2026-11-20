@@ -116,8 +116,8 @@ export const WorldMap: React.FC<WorldMapProps> = ({
           aria-label="Camino de avance del personaje"
           className="bg-white rounded-3xl border-2 border-[#1B4332]/15 p-5 sm:p-6 shadow-sm space-y-5"
         >
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+            <div className="flex flex-col sm:flex-row items-center gap-4">
               <CharacterAvatar
                 characterId={character.id}
                 mood={allCompleted ? 'cheering' : 'idle'}
@@ -223,7 +223,7 @@ export const WorldMap: React.FC<WorldMapProps> = ({
         </section>
 
         {/* Practice Mode Helper Strip */}
-        <div className="flex flex-wrap items-center justify-between gap-4 pb-3 border-b border-[#1B4332]/10">
+        <div className="flex flex-col sm:flex-row items-center justify-between text-center sm:text-left gap-4 pb-3 border-b border-[#1B4332]/10">
           <div className="text-sm text-[#1A2E22]/80">
             Completa cada nivel para que {character.shortName} avance por todo el jardín.
           </div>
@@ -251,18 +251,18 @@ export const WorldMap: React.FC<WorldMapProps> = ({
           const levels = VERSE_LEVELS.filter((lvl) => lvl.worldId === world.id);
           return (
             <section key={world.id} aria-labelledby={`world-${world.id}`}>
-              <div className="flex items-baseline gap-3 mb-4">
+              <div className="flex flex-col items-center text-center gap-1 mb-5">
                 <span className="font-mono text-xs font-bold text-amber-800 uppercase tracking-wider">
                   Mundo 0{world.id}
                 </span>
                 <h2
                   id={`world-${world.id}`}
-                  className="font-display text-2xl font-bold text-[#1B4332]"
+                  className="font-display text-2xl sm:text-3xl font-bold text-[#1B4332]"
                 >
                   {world.title}
                 </h2>
-                <span className="hidden sm:inline text-sm text-[#1A2E22]/65">
-                  · {world.subtitle}
+                <span className="text-sm text-[#1A2E22]/65">
+                  {world.subtitle}
                 </span>
               </div>
 
@@ -279,7 +279,7 @@ export const WorldMap: React.FC<WorldMapProps> = ({
                       type="button"
                       disabled={!unlocked}
                       onClick={() => unlocked && onSelectLevel(level)}
-                      className={`group text-left rounded-2xl p-5 border-2 transition-all duration-150 flex flex-col justify-between gap-4 min-h-[180px] ${
+                      className={`group text-center rounded-2xl p-5 border-2 transition-all duration-150 flex flex-col items-center justify-between gap-4 min-h-[200px] ${
                         unlocked
                           ? progress
                             ? 'bg-white border-emerald-600/35 hover:border-emerald-600 shadow-sm hover:-translate-y-0.5 cursor-pointer'
@@ -287,16 +287,7 @@ export const WorldMap: React.FC<WorldMapProps> = ({
                           : 'bg-[#F2EFE4] border-[#1B4332]/10 opacity-70 cursor-not-allowed'
                       }`}
                     >
-                      <div className="flex items-start justify-between gap-3 w-full">
-                        <div>
-                          <div className="text-xs font-bold text-[#1B4332]/65 font-mono tabular-nums">
-                            Nivel {level.levelNumber} · {level.reference}
-                          </div>
-                          <h3 className="font-display text-xl font-bold text-[#1A2E22] mt-1">
-                            {level.reward.name}
-                          </h3>
-                        </div>
-
+                      <div className="flex flex-col items-center gap-2.5 w-full">
                         {isFrontier ? (
                           <CharacterAvatar characterId={character.id} mood="cheering" size="sm" />
                         ) : (
@@ -306,9 +297,18 @@ export const WorldMap: React.FC<WorldMapProps> = ({
                             size="sm"
                           />
                         )}
+
+                        <div>
+                          <div className="text-xs font-bold text-[#1B4332]/65 font-mono tabular-nums">
+                            Nivel {level.levelNumber} · {level.reference}
+                          </div>
+                          <h3 className="font-display text-xl font-bold text-[#1A2E22] mt-1">
+                            {level.reward.name}
+                          </h3>
+                        </div>
                       </div>
 
-                      <p className="text-sm text-[#1A2E22]/75 line-clamp-2 leading-snug">
+                      <p className="text-sm text-[#1A2E22]/75 line-clamp-2 leading-snug text-center">
                         {unlocked
                           ? `“${level.verseText}”`
                           : 'Completa el nivel anterior para descubrir este versículo.'}

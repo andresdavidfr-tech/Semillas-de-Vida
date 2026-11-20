@@ -634,7 +634,7 @@ export const PictureModeView: React.FC<PictureModeViewProps> = ({
           <div className="flex-1 flex flex-col items-center justify-center gap-6 animate-gentle-pop">
             {/* Initial Help & Live Spoken-Word Spotlight */}
             <div
-              className={`w-full rounded-3xl border-2 px-5 py-3.5 flex flex-wrap items-center justify-between gap-3 transition-all ${
+              className={`w-full rounded-3xl border-2 px-5 py-4 flex flex-col items-center text-center gap-3.5 transition-all ${
                 recitingMode === 'intro-help'
                   ? 'bg-amber-100 border-amber-500 shadow-sm'
                   : activeScene
@@ -644,7 +644,7 @@ export const PictureModeView: React.FC<PictureModeViewProps> = ({
                   : 'bg-white border-[#1B4332]/15'
               }`}
             >
-              <div className="flex items-center gap-3 min-w-0">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 min-w-0">
                 <div
                   className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
                     activeScene
@@ -663,7 +663,7 @@ export const PictureModeView: React.FC<PictureModeViewProps> = ({
                   )}
                 </div>
 
-                <div className="min-w-0">
+                <div className="min-w-0 text-center">
                   {recitingMode === 'intro-help' ? (
                     <p className="font-bold text-sm sm:text-base text-[#1A2E22]">
                       Ayuda inicial: mira qué dibujo brilla mientras escuchas sus palabras.
@@ -673,7 +673,7 @@ export const PictureModeView: React.FC<PictureModeViewProps> = ({
                       📖 {activeLevel.reference} — ¡Atentos, ya empieza!
                     </p>
                   ) : activeScene ? (
-                    <p className="font-display font-extrabold text-base sm:text-xl text-[#1A2E22] truncate">
+                    <p className="font-display font-extrabold text-lg sm:text-2xl text-[#1A2E22]">
                       “{activeScene.spokenPhrase}”
                     </p>
                   ) : (
@@ -684,11 +684,11 @@ export const PictureModeView: React.FC<PictureModeViewProps> = ({
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex flex-wrap items-center justify-center gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => playSyncedVerse(activeLevel, false)}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-amber-400 hover:bg-amber-300 text-[#1A2E22] font-extrabold text-xs sm:text-sm cursor-pointer transition-colors"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-amber-400 hover:bg-amber-300 text-[#1A2E22] font-extrabold text-xs sm:text-sm cursor-pointer transition-colors"
                 >
                   <Volume2 className="w-4 h-4" />
                   <span>Versículo</span>
@@ -696,7 +696,7 @@ export const PictureModeView: React.FC<PictureModeViewProps> = ({
                 <button
                   type="button"
                   onClick={() => playStepByStepGuide(activeLevel)}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-[#EFE9D8] hover:bg-[#E4DCC6] text-[#1B4332] font-extrabold text-xs sm:text-sm cursor-pointer transition-colors"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-[#EFE9D8] hover:bg-[#E4DCC6] text-[#1B4332] font-extrabold text-xs sm:text-sm cursor-pointer transition-colors"
                 >
                   <Layers className="w-4 h-4" />
                   <span>Dibujo por dibujo</span>
@@ -849,7 +849,11 @@ export const PictureModeView: React.FC<PictureModeViewProps> = ({
         {phase === 'ORDER_SCENES' && (
           <div className="flex-1 flex flex-col items-center justify-center gap-7 animate-gentle-pop">
             {/* Numbered Story Slots */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full bg-white rounded-3xl border-2 border-[#1B4332]/15 p-5 shadow-sm">
+            <div
+              className={`grid grid-cols-2 ${
+                activeLevel.scenes.length === 3 ? 'sm:grid-cols-3 max-w-4xl' : 'sm:grid-cols-4'
+              } gap-4 w-full bg-white rounded-3xl border-2 border-[#1B4332]/15 p-5 shadow-sm`}
+            >
               {activeLevel.scenes.map((slotScene, idx) => {
                 const placed = placedScenes[idx];
                 const isNext = idx === placedScenes.length;

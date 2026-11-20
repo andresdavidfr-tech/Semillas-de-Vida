@@ -120,28 +120,27 @@ export const GardenView: React.FC<GardenViewProps> = ({ save, onBack, onPlayLeve
               className="w-full h-full object-cover"
             />
           </div>
-          <div className="lg:col-span-6 p-6 sm:p-8 flex flex-col justify-center gap-4">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2 text-xs font-bold text-emerald-800 uppercase tracking-wider">
-                <Sprout className="w-4 h-4 text-emerald-600" aria-hidden="true" />
-                <span>Etapa de Crecimiento</span>
-              </div>
+          <div className="lg:col-span-6 p-6 sm:p-8 flex flex-col justify-center items-center text-center gap-4">
+            <div className="flex flex-col items-center gap-2">
               <CharacterAvatar
                 characterId={character.id}
                 mood={completedCount > 0 ? 'cheering' : 'idle'}
                 size="sm"
               />
+              <div className="flex items-center gap-2 text-xs font-bold text-emerald-800 uppercase tracking-wider">
+                <Sprout className="w-4 h-4 text-emerald-600" aria-hidden="true" />
+                <span>Etapa de Crecimiento</span>
+              </div>
             </div>
 
             <h2 className="font-display text-3xl font-bold text-[#1B4332]">
               {stage.name}
             </h2>
-            <p className="text-base text-[#1A2E22]/80 leading-relaxed">
+            <p className="text-base text-[#1A2E22]/80 leading-relaxed max-w-md">
               {stage.message}
             </p>
 
-            {/* Progress Bar */}
-            <div className="pt-2">
+            <div className="pt-2 w-full">
               <div className="flex items-center justify-between text-xs font-bold font-mono tabular-nums text-[#1B4332] mb-2">
                 <span>Frutos de la Palabra</span>
                 <span>{completedCount} / {VERSE_LEVELS.length}</span>
@@ -158,11 +157,11 @@ export const GardenView: React.FC<GardenViewProps> = ({ save, onBack, onPlayLeve
 
         {/* 12 Collectible Treasure Emblems */}
         <section>
-          <div className="mb-5">
-            <h2 className="font-display text-2xl font-bold text-[#1B4332]">
+          <div className="mb-6 text-center">
+            <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#1B4332]">
               Cofre de 12 Tesoros
             </h2>
-            <p className="text-sm text-[#1A2E22]/75">
+            <p className="text-sm text-[#1A2E22]/75 mt-1">
               Toca cualquier tesoro desbloqueado para leer o escuchar su versículo guardado.
             </p>
           </div>
