@@ -40,7 +40,7 @@ function getTreeStage(count: number): { name: string; message: string } {
   }
   return {
     name: 'Árbol de Vida Pleno',
-    message: '¡Felicidades! Has atesorado los 12 versículos de la Versión Recobro.',
+    message: '¡Felicidades! Has atesorado los 12 versículos bíblicos.',
   };
 }
 
@@ -263,7 +263,7 @@ export const GardenView: React.FC<GardenViewProps> = ({ save, onBack, onPlayLeve
 
               <div>
                 <div className="text-xs font-mono font-bold text-amber-800 uppercase tracking-wider">
-                  {selectedLevel.reference} · Versión Recobro
+                  {selectedLevel.reference}
                 </div>
                 <h3
                   id="keepsake-title"
@@ -282,27 +282,8 @@ export const GardenView: React.FC<GardenViewProps> = ({ save, onBack, onPlayLeve
                     {selectedLevel.kidNote}
                   </p>
                   {speechError && (
-                    <div className="text-xs font-bold text-red-800 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 space-y-2">
+                    <div className="text-xs font-bold text-red-800 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">
                       <p>{speechError}</p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSpeechError(null);
-                          sound.speakWithFreeNaturalVoice(
-                            selectedLevel.reference,
-                            selectedLevel.verseText,
-                            {
-                              characterId: character.id,
-                              ageGroup: save.ageGroup,
-                              onStart: () => setIsSpeaking(true),
-                              onEnd: () => setIsSpeaking(false),
-                            }
-                          );
-                        }}
-                        className="px-3 py-1.5 rounded-lg bg-white border border-red-300 text-red-900 hover:bg-red-100 transition-colors cursor-pointer"
-                      >
-                        Escuchar con voz gratuita
-                      </button>
                     </div>
                   )}
                   <div className="flex flex-wrap items-center justify-center gap-3 pt-2">

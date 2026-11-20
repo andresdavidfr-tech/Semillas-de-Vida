@@ -85,7 +85,7 @@ export const RoundSummaryModal: React.FC<RoundSummaryModalProps> = ({
         {/* Memorized Verse Keepsake */}
         <div className="bg-white rounded-2xl p-5 border border-[#1B4332]/15 space-y-2">
           <div className="text-xs font-mono font-bold text-amber-800">
-            {level.reference} · Versión Recobro
+            {level.reference}
           </div>
           <p className="font-display text-xl font-bold text-[#1A2E22] leading-relaxed">
             “{level.verseText}”

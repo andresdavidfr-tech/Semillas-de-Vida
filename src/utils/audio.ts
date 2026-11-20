@@ -1,4 +1,4 @@
-import { CharacterId, getCharacterById } from '../data/characters';
+import { CharacterId } from '../data/characters';
 import { AgeGroup } from '../data/verses';
 
 export type MusicMood = 'menu' | 'play' | 'victory';
@@ -10,13 +10,6 @@ export interface SpeakOptions {
   onStart?: () => void;
   onEnd?: () => void;
   onError?: (message: string) => void;
-}
-
-export interface SpanishVoiceOption {
-  voiceURI: string;
-  name: string;
-  lang: string;
-  isNatural: boolean;
 }
 
 const BOOK_SPOKEN_NAMES: Record<string, string> = {
@@ -34,27 +27,6 @@ export function formatReferenceForSpeech(reference: string): string {
   const verse = match[3];
   const book = BOOK_SPOKEN_NAMES[rawBook] ?? rawBook;
   return `${book}, capítulo ${chapter}, versículo ${verse}.`;
-}
-
-function scoreSpanishVoice(v: SpeechSynthesisVoice): number {
-  const name = v.name.toLowerCase();
-  const lang = v.lang.toLowerCase();
-  let score = 0;
-
-  if (lang.startsWith('es')) score += 50;
-  if (lang.includes('419') || lang.includes('mx') || lang.includes('us') || lang.includes('es')) {
-    score += 10;
-  }
-  if (/natural|neural|online/i.test(name)) score += 100;
-  if (/google/i.test(name)) score += 65;
-  if (/dalia|paulina|sabina|helena|luciana|monica|mónica|camila|sofia|sofía|valentina|elena|laura|paloma|salome|salomé/i.test(name)) {
-    score += 45;
-  }
-  if (/enhanced|premium|siri/i.test(name)) score += 55;
-  if (/espeak|mbrola/i.test(name)) score -= 80;
-  if (!v.localService && /microsoft|google/i.test(name)) score += 20;
-
-  return score;
 }
 
 function base64ToBlobUrl(base64: string, mimeType: string): string {
@@ -182,7 +154,7 @@ async function renderAmbientLoopBuffer(
   const stepSec = mood === 'play' ? 0.28 : mood === 'victory' ? 0.30 : 0.34;
   const totalSteps = 32;
   const loopDuration = stepSec * totalSteps;
-  const tailOverlapSec = 2.0; // Extra render tail wrapped back into start for seamless loop
+  const tailOverlapSec = 2.0;
   const renderLength = Math.ceil((loopDuration + tailOverlapSec) * sampleRate);
   const loopSamples = Math.round(loopDuration * sampleRate);
 
@@ -213,11 +185,8 @@ async function renderAmbientLoopBuffer(
     if (noteFreq > 0) {
       const vol = mood === 'play' ? 0.068 : 0.056;
       const pan = ((step % 4) - 1.5) * 0.16;
-      // Kalimba / felt marimba primary pluck
       scheduleOfflineVoice(offline, master, noteFreq, 'sine', vol, 0.012, 0.42, t, pan);
-      // Warm harmonic shimmer
       scheduleOfflineVoice(offline, master, noteFreq * 2, 'sine', vol * 0.2, 0.008, 0.18, t, -pan);
-      // Soft echo repeat one dotted-eighth later
       scheduleOfflineVoice(
         offline,
         master,
@@ -242,8 +211,6 @@ async function renderAmbientLoopBuffer(
   }
 
   const rendered = await offline.startRendering();
-
-  // Fold the reverb/chord tail beyond loopDuration back onto the beginning so the loop never clicks
   const cleanLoop = new AudioBuffer({
     numberOfChannels: 2,
     length: loopSamples,
@@ -280,50 +247,16 @@ class SoundManager {
   private currentAudio: HTMLAudioElement | null = null;
   private audioCache = new Map<string, string>();
   private abortController: AbortController | null = null;
-  private preferredVoiceURI: string | undefined = undefined;
-  private cachedVoices: SpeechSynthesisVoice[] = [];
   private speechSessionId = 0;
 
   constructor() {
     if (typeof window !== 'undefined') {
-      if ('speechSynthesis' in window) {
-        const refresh = () => {
-          this.cachedVoices = window.speechSynthesis.getVoices();
-        };
-        refresh();
-        window.speechSynthesis.addEventListener?.('voiceschanged', refresh);
-      }
-
       document.addEventListener('visibilitychange', () => {
         if (!document.hidden && this.musicRunning && this.ctx?.state === 'suspended' && !this.muted) {
           void this.ctx.resume();
         }
       });
     }
-  }
-
-  public setPreferredVoiceURI(uri?: string): void {
-    this.preferredVoiceURI = uri;
-  }
-
-  public getSpanishVoices(): SpanishVoiceOption[] {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-      return [];
-    }
-    const raw =
-      this.cachedVoices.length > 0
-        ? this.cachedVoices
-        : window.speechSynthesis.getVoices();
-
-    return raw
-      .filter((v) => v.lang.toLowerCase().startsWith('es'))
-      .sort((a, b) => scoreSpanishVoice(b) - scoreSpanishVoice(a))
-      .map((v) => ({
-        voiceURI: v.voiceURI,
-        name: v.name.replace(/\s*\(Natural\)/i, ' (Natural)'),
-        lang: v.lang,
-        isNatural: /natural|neural|online|google|enhanced|premium/i.test(v.name),
-      }));
   }
 
   public setMuted(muted: boolean): void {
@@ -439,7 +372,6 @@ class SoundManager {
       return;
     }
 
-    // Pre-warm alternate moods in idle time so transitions are instant
     const otherMoods: MusicMood[] = (['menu', 'play', 'victory'] as MusicMood[]).filter(
       (m) => m !== activeMood && !this.loopBuffers.has(m)
     );
@@ -572,12 +504,6 @@ class SoundManager {
     const fullText = `${spokenReference} ${verseText}`;
     const cacheKey = `${charId}:${ageGroup}:${fullText}`;
 
-    // Only use local device speechSynthesis if user explicitly chose a specific device voice URI
-    if (this.preferredVoiceURI) {
-      this.speakWithFreeNaturalVoice(reference, verseText, options);
-      return;
-    }
-
     const playAudioUrl = async (url: string) => {
       const audio = new Audio(url);
       this.currentAudio = audio;
@@ -597,7 +523,8 @@ class SoundManager {
           this.currentAudio = null;
         }
         this.setMusicDucked(false);
-        this.speakWithFreeNaturalVoice(reference, verseText, options);
+        options?.onError?.('No se pudo reproducir el audio.');
+        options?.onEnd?.();
       };
       await audio.play();
     };
@@ -608,7 +535,8 @@ class SoundManager {
         await playAudioUrl(cachedUrl);
       } catch {
         this.setMusicDucked(false);
-        this.speakWithFreeNaturalVoice(reference, verseText, options);
+        options?.onError?.('No se pudo reproducir el audio en caché.');
+        options?.onEnd?.();
       }
       return;
     }
@@ -636,7 +564,7 @@ class SoundManager {
       };
 
       if (!res.ok || !payload.audioBase64) {
-        throw new Error('Server TTS unavailable');
+        throw new Error('No se pudo obtener la narración natural del servidor.');
       }
 
       const mimeType = payload.mimeType || 'audio/mpeg';
@@ -664,98 +592,13 @@ class SoundManager {
         options?.onEnd?.();
         return;
       }
-      // Emergency offline safety net if there is no internet access
-      this.speakWithFreeNaturalVoice(reference, verseText, options);
+      const msg = err instanceof Error ? err.message : 'Error al obtener narración natural.';
+      options?.onError?.(msg);
+      options?.onEnd?.();
     } finally {
       if (this.abortController === controller) {
         this.abortController = null;
       }
-    }
-  }
-
-  public speakWithFreeNaturalVoice(
-    reference: string,
-    verseText: string,
-    options?: SpeakOptions
-  ): boolean {
-    if (this.muted || typeof window === 'undefined' || !('speechSynthesis' in window)) {
-      options?.onEnd?.();
-      options?.onError?.('Tu navegador no tiene lectura de voz disponible.');
-      return false;
-    }
-
-    try {
-      window.speechSynthesis.cancel();
-      const session = ++this.speechSessionId;
-      const voices =
-        this.cachedVoices.length > 0
-          ? this.cachedVoices
-          : window.speechSynthesis.getVoices();
-
-      const spanishVoices = voices
-        .filter((v) => v.lang.toLowerCase().startsWith('es'))
-        .sort((a, b) => scoreSpanishVoice(b) - scoreSpanishVoice(a));
-
-      const chosenVoice =
-        (this.preferredVoiceURI
-          ? spanishVoices.find((v) => v.voiceURI === this.preferredVoiceURI)
-          : undefined) || spanishVoices[0];
-
-      const character = getCharacterById(options?.characterId ?? 'lamb');
-      const isNaturalNeural = chosenVoice
-        ? /natural|neural|online|google|siri/i.test(chosenVoice.name)
-        : false;
-
-      const pitch = isNaturalNeural ? 1.05 : Math.min(character.voicePitch, 1.12);
-      const rate = options?.ageGroup === 'young' ? 0.88 : 0.94;
-
-      const spokenReference = formatReferenceForSpeech(reference);
-      const clauses = verseText
-        .split(/(?<=[,;:.!?])\s+/)
-        .map((s) => s.trim())
-        .filter(Boolean);
-
-      const segments = [spokenReference, ...clauses];
-
-      this.setMusicDucked(true);
-      options?.onStart?.();
-
-      const speakNext = (idx: number) => {
-        if (session !== this.speechSessionId || this.muted) {
-          this.setMusicDucked(false);
-          return;
-        }
-        if (idx >= segments.length) {
-          this.setMusicDucked(false);
-          options?.onEnd?.();
-          return;
-        }
-
-        const utterance = new SpeechSynthesisUtterance(segments[idx]);
-        utterance.lang = chosenVoice?.lang || 'es-ES';
-        if (chosenVoice) utterance.voice = chosenVoice;
-        utterance.rate = idx === 0 ? Math.min(rate + 0.04, 1.0) : rate;
-        utterance.pitch = pitch;
-
-        utterance.onend = () => {
-          if (session !== this.speechSessionId) return;
-          window.setTimeout(() => speakNext(idx + 1), idx === 0 ? 220 : 120);
-        };
-        utterance.onerror = () => {
-          if (session !== this.speechSessionId) return;
-          this.setMusicDucked(false);
-          options?.onEnd?.();
-        };
-
-        window.speechSynthesis.speak(utterance);
-      };
-
-      speakNext(0);
-      return true;
-    } catch {
-      this.setMusicDucked(false);
-      options?.onEnd?.();
-      return false;
     }
   }
 
@@ -774,13 +617,6 @@ class SoundManager {
         // ignore audio stop errors
       }
       this.currentAudio = null;
-    }
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      try {
-        window.speechSynthesis.cancel();
-      } catch {
-        // ignore speech cancel errors
-      }
     }
   }
 }

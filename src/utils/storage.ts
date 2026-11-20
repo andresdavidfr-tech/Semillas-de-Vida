@@ -12,20 +12,18 @@ export interface SaveData {
   characterId: CharacterId;
   muted: boolean;
   musicEnabled: boolean;
-  preferredVoiceURI?: string;
   totalSeeds: number;
   completedLevels: Record<string, LevelProgress>;
   unlockedAllPractice: boolean;
 }
 
-const STORAGE_KEY = 'semillas_de_vida_save_v1';
+const STORAGE_KEY = 'semillas_de_vida_save_v2';
 
 const DEFAULT_SAVE: SaveData = {
   ageGroup: 'young',
   characterId: 'lamb',
   muted: false,
   musicEnabled: true,
-  preferredVoiceURI: undefined,
   totalSeeds: 0,
   completedLevels: {},
   unlockedAllPractice: false,
@@ -35,7 +33,7 @@ const VALID_CHARACTERS: CharacterId[] = ['lamb', 'dove', 'lion', 'squirrel'];
 
 export function loadSaveData(): SaveData {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('semillas_de_vida_save_v1');
     if (!raw) return { ...DEFAULT_SAVE };
     const parsed = JSON.parse(raw) as Partial<SaveData>;
     const charId =
@@ -47,10 +45,6 @@ export function loadSaveData(): SaveData {
       characterId: charId,
       muted: Boolean(parsed.muted),
       musicEnabled: parsed.musicEnabled !== false,
-      preferredVoiceURI:
-        typeof parsed.preferredVoiceURI === 'string'
-          ? parsed.preferredVoiceURI
-          : undefined,
       totalSeeds: typeof parsed.totalSeeds === 'number' ? parsed.totalSeeds : 0,
       completedLevels:
         parsed.completedLevels && typeof parsed.completedLevels === 'object'

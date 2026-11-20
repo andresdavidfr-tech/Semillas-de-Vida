@@ -79,9 +79,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
       <header className="relative z-10 flex items-center justify-between px-6 sm:px-10 pt-5">
         <div className="flex items-center gap-2 text-sm font-semibold text-[#1B4332]">
           <BookOpen className="w-4 h-4 text-amber-700" aria-hidden="true" />
-          <span>Versión Recobro</span>
-          <span aria-hidden="true">·</span>
-          <span className="text-[#1B4332]/75">Living Stream Ministry</span>
+          <span>Semillas de Vida</span>
         </div>
 
         <div className="flex items-center gap-3">

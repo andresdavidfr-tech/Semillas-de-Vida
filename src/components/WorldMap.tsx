@@ -61,7 +61,7 @@ export const WorldMap: React.FC<WorldMapProps> = ({
                 Mapa de Versículos
               </h1>
               <p className="text-xs text-emerald-100/85">
-                Versión Recobro · {completedCount} de {VERSE_LEVELS.length} memorizados
+                {completedCount} de {VERSE_LEVELS.length} versículos memorizados
               </p>
             </div>
           </div>
