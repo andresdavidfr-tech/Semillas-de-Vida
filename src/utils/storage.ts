@@ -13,6 +13,7 @@ export interface SaveData {
   musicEnabled: boolean;
   totalSeeds: number;
   completedLevels: Record<string, LevelProgress>;
+  completedPictureLevels: Record<string, LevelProgress>;
   unlockedAllPractice: boolean;
 }
 
@@ -24,6 +25,7 @@ const DEFAULT_SAVE: SaveData = {
   musicEnabled: true,
   totalSeeds: 0,
   completedLevels: {},
+  completedPictureLevels: {},
   unlockedAllPractice: false,
 };
 
@@ -31,7 +33,8 @@ const VALID_CHARACTERS: CharacterId[] = ['lamb', 'dove', 'lion', 'squirrel'];
 
 export function loadSaveData(): SaveData {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('semillas_de_vida_save_v1');
+    const raw =
+      localStorage.getItem(STORAGE_KEY) || localStorage.getItem('semillas_de_vida_save_v1');
     if (!raw) return { ...DEFAULT_SAVE };
     const parsed = JSON.parse(raw) as Partial<SaveData>;
     const charId =
@@ -46,6 +49,10 @@ export function loadSaveData(): SaveData {
       completedLevels:
         parsed.completedLevels && typeof parsed.completedLevels === 'object'
           ? parsed.completedLevels
+          : {},
+      completedPictureLevels:
+        parsed.completedPictureLevels && typeof parsed.completedPictureLevels === 'object'
+          ? parsed.completedPictureLevels
           : {},
       unlockedAllPractice: Boolean(parsed.unlockedAllPractice),
     };
@@ -75,6 +82,10 @@ export function getTotalStars(save: SaveData): number {
 
 export function getCompletedCount(save: SaveData): number {
   return Object.keys(save.completedLevels).length;
+}
+
+export function getPictureCompletedCount(save: SaveData): number {
+  return Object.keys(save.completedPictureLevels).length;
 }
 
 export function getCurrentFrontierLevelNumber(save: SaveData): number {

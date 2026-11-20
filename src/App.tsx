@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { VERSE_LEVELS, VerseLevel } from './data/verses';
 import { CharacterId } from './data/characters';
+import { AchievementDefinition, getUnlockedAchievements } from './data/achievements';
 import {
   SaveData,
   getCompletedCount,
@@ -14,8 +15,15 @@ import { WorldMap } from './components/WorldMap';
 import { GardenView } from './components/GardenView';
 import { GameplayView } from './components/GameplayView';
 import { RoundSummaryModal } from './components/RoundSummaryModal';
+import { PictureModeView } from './components/PictureModeView';
 
-type AppScreen = 'TITLE_MENU' | 'WORLD_MAP' | 'GARDEN_VIEW' | 'PLAYING' | 'ROUND_SUMMARY';
+type AppScreen =
+  | 'TITLE_MENU'
+  | 'WORLD_MAP'
+  | 'GARDEN_VIEW'
+  | 'PLAYING'
+  | 'ROUND_SUMMARY'
+  | 'PICTURE_MODE';
 
 interface LastSummary {
   level: VerseLevel;
@@ -23,6 +31,7 @@ interface LastSummary {
   seedsEarned: number;
   accuracy: number;
   isNewUnlock: boolean;
+  newlyUnlockedAchievements: AchievementDefinition[];
 }
 
 export default function App() {
@@ -39,7 +48,7 @@ export default function App() {
   }, [save]);
 
   useEffect(() => {
-    if (screen === 'PLAYING') {
+    if (screen === 'PLAYING' || screen === 'PICTURE_MODE') {
       sound.setMusicMood('play');
     } else if (screen === 'ROUND_SUMMARY') {
       sound.setMusicMood('victory');
@@ -102,35 +111,61 @@ export default function App() {
 
   const handleLevelComplete = useCallback(
     (stars: number, seedsEarned: number, accuracy: number) => {
+      const prevUnlockedIds = new Set(getUnlockedAchievements(save).map((a) => a.id));
       const prevProgress = save.completedLevels[activeLevel.id];
       const isNewUnlock = !prevProgress;
 
-      setSave((prev) => {
-        const existing = prev.completedLevels[activeLevel.id];
-        return {
-          ...prev,
-          totalSeeds: prev.totalSeeds + seedsEarned,
-          completedLevels: {
-            ...prev.completedLevels,
-            [activeLevel.id]: {
-              stars: existing ? Math.max(existing.stars, stars) : stars,
-              bestAccuracy: existing ? Math.max(existing.bestAccuracy, accuracy) : accuracy,
-              completedAt: Date.now(),
-            },
+      const existing = save.completedLevels[activeLevel.id];
+      const nextSave: SaveData = {
+        ...save,
+        totalSeeds: save.totalSeeds + seedsEarned,
+        completedLevels: {
+          ...save.completedLevels,
+          [activeLevel.id]: {
+            stars: existing ? Math.max(existing.stars, stars) : stars,
+            bestAccuracy: existing ? Math.max(existing.bestAccuracy, accuracy) : accuracy,
+            completedAt: Date.now(),
           },
-        };
-      });
+        },
+      };
 
+      const newlyUnlockedAchievements = getUnlockedAchievements(nextSave).filter(
+        (a) => !prevUnlockedIds.has(a.id)
+      );
+
+      setSave(nextSave);
       setLastSummary({
         level: activeLevel,
         stars,
         seedsEarned,
         accuracy,
         isNewUnlock,
+        newlyUnlockedAchievements,
       });
       setScreen('ROUND_SUMMARY');
     },
-    [activeLevel, save.completedLevels]
+    [activeLevel, save]
+  );
+
+  const handleCompletePictureLevel = useCallback(
+    (levelId: string, stars: number, seedsEarned: number) => {
+      setSave((prev) => {
+        const existing = prev.completedPictureLevels[levelId];
+        return {
+          ...prev,
+          totalSeeds: prev.totalSeeds + seedsEarned,
+          completedPictureLevels: {
+            ...prev.completedPictureLevels,
+            [levelId]: {
+              stars: existing ? Math.max(existing.stars, stars) : stars,
+              bestAccuracy: 100,
+              completedAt: Date.now(),
+            },
+          },
+        };
+      });
+    },
+    []
   );
 
   const nextLevel =
@@ -140,6 +175,7 @@ export default function App() {
   if (screen === 'TITLE_MENU') {
     return (
       <TitleScreen
+        save={save}
         characterId={save.characterId}
         onChangeCharacter={handleChangeCharacter}
         muted={save.muted}
@@ -154,10 +190,29 @@ export default function App() {
           sound.playTap();
           setScreen('WORLD_MAP');
         }}
+        onStartPictureMode={() => {
+          sound.playTap();
+          setScreen('PICTURE_MODE');
+        }}
         onOpenGarden={() => {
           sound.playTap();
           setScreen('GARDEN_VIEW');
         }}
+      />
+    );
+  }
+
+  if (screen === 'PICTURE_MODE') {
+    return (
+      <PictureModeView
+        save={save}
+        characterId={save.characterId}
+        muted={save.muted}
+        onToggleMute={handleToggleMute}
+        musicEnabled={save.musicEnabled}
+        onToggleMusic={handleToggleMusic}
+        onBackToMenu={() => setScreen('TITLE_MENU')}
+        onCompletePictureLevel={handleCompletePictureLevel}
       />
     );
   }
@@ -235,6 +290,7 @@ export default function App() {
         seedsEarned={lastSummary.seedsEarned}
         accuracy={lastSummary.accuracy}
         isNewUnlock={lastSummary.isNewUnlock}
+        newlyUnlockedAchievements={lastSummary.newlyUnlockedAchievements}
         hasNextLevel={Boolean(nextLevel)}
         onNextLevel={() => {
           if (nextLevel) {

@@ -6,6 +6,7 @@ export interface SpeakOptions {
   characterId?: CharacterId;
   onLoading?: () => void;
   onStart?: () => void;
+  onProgress?: (currentTime: number, duration: number) => void;
   onEnd?: () => void;
   onError?: (message: string) => void;
 }
@@ -488,7 +489,15 @@ class SoundManager {
     verseText: string,
     options?: SpeakOptions
   ): Promise<void> {
-    if (this.muted || typeof window === 'undefined') {
+    const spokenReference = formatReferenceForSpeech(reference);
+    await this.speakText(`${spokenReference} ${verseText}`, options);
+  }
+
+  public async speakText(
+    text: string,
+    options?: SpeakOptions
+  ): Promise<void> {
+    if (this.muted || typeof window === 'undefined' || !text.trim()) {
       options?.onEnd?.();
       return;
     }
@@ -497,18 +506,40 @@ class SoundManager {
     this.stopSpeech();
 
     const charId = options?.characterId ?? 'lamb';
-    const spokenReference = formatReferenceForSpeech(reference);
-    const fullText = `${spokenReference} ${verseText}`;
+    const fullText = text.trim();
     const cacheKey = `${charId}:${fullText}`;
 
     const playAudioUrl = async (url: string) => {
       const audio = new Audio(url);
       this.currentAudio = audio;
+      let progressTimer: number | null = null;
+
+      const emitProgress = () => {
+        if (this.currentAudio !== audio) return;
+        if (audio.duration && Number.isFinite(audio.duration) && audio.duration > 0) {
+          options?.onProgress?.(audio.currentTime, audio.duration);
+        }
+      };
+
+      const stopTimer = () => {
+        if (progressTimer !== null) {
+          window.clearInterval(progressTimer);
+          progressTimer = null;
+        }
+      };
+
       audio.onplay = () => {
         this.setMusicDucked(true);
         options?.onStart?.();
+        emitProgress();
+        stopTimer();
+        if (options?.onProgress) {
+          progressTimer = window.setInterval(emitProgress, 75);
+        }
       };
+      audio.ontimeupdate = emitProgress;
       audio.onended = () => {
+        stopTimer();
         if (this.currentAudio === audio) {
           this.currentAudio = null;
         }
@@ -516,6 +547,7 @@ class SoundManager {
         options?.onEnd?.();
       };
       audio.onerror = () => {
+        stopTimer();
         if (this.currentAudio === audio) {
           this.currentAudio = null;
         }

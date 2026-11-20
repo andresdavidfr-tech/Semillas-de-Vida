@@ -1,9 +1,24 @@
-import React, { useEffect } from 'react';
-import { Volume2, VolumeX, Music, Sprout, Play, BookOpen } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import {
+  Volume2,
+  VolumeX,
+  Music,
+  Sprout,
+  Play,
+  BookOpen,
+  Award,
+  Images,
+  ChevronRight,
+} from 'lucide-react';
 import { CharacterId, GAME_CHARACTERS, getCharacterById } from '../data/characters';
+import { ACHIEVEMENTS, isAchievementUnlocked } from '../data/achievements';
+import { SaveData } from '../utils/storage';
 import { CharacterAvatar } from './CharacterAvatar';
+import { AchievementBadge } from './AchievementBadge';
+import { AchievementsModal } from './AchievementsModal';
 
 interface TitleScreenProps {
+  save: SaveData;
   characterId: CharacterId;
   onChangeCharacter: (id: CharacterId) => void;
   muted: boolean;
@@ -15,10 +30,12 @@ interface TitleScreenProps {
   completedCount: number;
   totalLevels: number;
   onStart: () => void;
+  onStartPictureMode: () => void;
   onOpenGarden: () => void;
 }
 
 export const TitleScreen: React.FC<TitleScreenProps> = ({
+  save,
   characterId,
   onChangeCharacter,
   muted,
@@ -30,13 +47,21 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   completedCount,
   totalLevels,
   onStart,
+  onStartPictureMode,
   onOpenGarden,
 }) => {
   const selectedCharacter = getCharacterById(characterId);
+  const [showAchievements, setShowAchievements] = useState(false);
+
+  const unlockedCount = ACHIEVEMENTS.filter((a) => isAchievementUnlocked(a, save)).length;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === ' ') {
+      if (e.key === 'Escape' && showAchievements) {
+        setShowAchievements(false);
+        return;
+      }
+      if ((e.key === 'Enter' || e.key === ' ') && !showAchievements) {
         const activeTag = document.activeElement?.tagName;
         if (activeTag !== 'BUTTON') {
           e.preventDefault();
@@ -48,7 +73,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onStart, onToggleMute]);
+  }, [onStart, onToggleMute, showAchievements]);
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden flex flex-col justify-between bg-[#F3EEDB]">
@@ -61,7 +86,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
           className="w-full h-full object-cover object-center"
         />
         <div
-          className="absolute inset-0 bg-gradient-to-r from-[#FBF9F2]/96 via-[#FBF9F2]/85 to-[#FBF9F2]/20 md:via-[#FBF9F2]/75 md:to-transparent"
+          className="absolute inset-0 bg-gradient-to-r from-[#FBF9F2]/96 via-[#FBF9F2]/88 to-[#FBF9F2]/30 md:via-[#FBF9F2]/80 md:to-transparent"
           aria-hidden="true"
         />
         <div
@@ -71,13 +96,25 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
       </div>
 
       {/* Top Minimal Floating Controls */}
-      <header className="relative z-10 flex items-center justify-between px-6 sm:px-10 pt-5">
+      <header className="relative z-10 flex items-center justify-between px-6 sm:px-10 pt-5 gap-3 flex-wrap">
         <div className="flex items-center gap-2 text-sm font-semibold text-[#1B4332]">
           <BookOpen className="w-4 h-4 text-amber-700" aria-hidden="true" />
           <span>Semillas de Vida</span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setShowAchievements(true)}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-100/95 hover:bg-amber-200 text-[#1B4332] font-bold text-sm border border-amber-400 shadow-sm transition-transform duration-150 active:scale-95 whitespace-nowrap cursor-pointer"
+          >
+            <Award className="w-4 h-4 text-amber-700" aria-hidden="true" />
+            <span>Logros</span>
+            <span className="font-mono tabular-nums text-amber-800">
+              {unlockedCount}/{ACHIEVEMENTS.length}
+            </span>
+          </button>
+
           {completedCount > 0 && (
             <button
               type="button"
@@ -103,7 +140,9 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
             }`}
           >
             <Music className="w-4 h-4" />
-            <span className="hidden sm:inline">{musicEnabled && !muted ? 'Música' : 'Sin música'}</span>
+            <span className="hidden sm:inline">
+              {musicEnabled && !muted ? 'Música' : 'Sin música'}
+            </span>
           </button>
           <button
             type="button"
@@ -116,14 +155,14 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
         </div>
       </header>
 
-      {/* Main Hero Lockup + Companion Selector */}
+      {/* Main Hero Lockup + Companion Selector + Achievements Section */}
       <main className="relative z-10 flex-1 flex items-center px-6 sm:px-10 md:px-16 py-6">
-        <div className="max-w-2xl w-full space-y-5">
+        <div className="max-w-3xl w-full space-y-5">
           {/* Bespoke Inline SVG Title Lockup */}
           <div>
             <svg
               viewBox="0 0 460 112"
-              className="w-full max-w-[390px] h-auto"
+              className="w-full max-w-[380px] h-auto"
               role="img"
               aria-label="Semillas de Vida"
             >
@@ -173,7 +212,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
           </div>
 
           {/* Character Companion Selector */}
-          <div className="bg-white/90 rounded-2xl p-4 border border-[#1B4332]/15 shadow-sm max-w-xl">
+          <div className="bg-white/92 rounded-2xl p-4 border border-[#1B4332]/15 shadow-sm max-w-xl">
             <div className="flex items-center justify-between gap-2 mb-3">
               <span className="text-xs font-bold tracking-wide text-[#1B4332]">
                 Elige tu personaje compañero
@@ -215,15 +254,24 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
             </p>
           </div>
 
-          {/* Primary CTA */}
-          <div className="flex flex-wrap items-center gap-4">
+          {/* Primary Play CTAs: Standard + Picture-Only Mode */}
+          <div className="flex flex-wrap items-center gap-3.5">
             <button
               type="button"
               onClick={onStart}
-              className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-2xl bg-[#1B4332] hover:bg-[#143326] text-white text-lg font-extrabold shadow-[0_5px_0_#0E241B] active:translate-y-0.5 active:shadow-[0_3px_0_#0E241B] transition-all duration-150 cursor-pointer whitespace-nowrap"
+              className="inline-flex items-center justify-center gap-3 px-7 py-4 rounded-2xl bg-[#1B4332] hover:bg-[#143326] text-white text-lg font-extrabold shadow-[0_5px_0_#0E241B] active:translate-y-0.5 active:shadow-[0_3px_0_#0E241B] transition-all duration-150 cursor-pointer whitespace-nowrap"
             >
               <Play className="w-5 h-5 fill-current" aria-hidden="true" />
               <span>{completedCount > 0 ? 'Continuar Aventura' : '¡Comenzar a Jugar!'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={onStartPictureMode}
+              className="inline-flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl bg-amber-400 hover:bg-amber-300 text-[#1A2E22] text-base font-extrabold shadow-[0_5px_0_#B45309] active:translate-y-0.5 active:shadow-[0_3px_0_#B45309] transition-all duration-150 cursor-pointer whitespace-nowrap"
+            >
+              <Images className="w-5 h-5" aria-hidden="true" />
+              <span>Solo Imágenes (Sin leer)</span>
             </button>
 
             {totalStars > 0 && (
@@ -232,14 +280,70 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
               </div>
             )}
           </div>
+
+          {/* Main Menu Section: Logros y Medallas */}
+          <section
+            aria-label="Sección de Logros y Medallas"
+            className="bg-white/92 rounded-2xl p-4 border border-[#1B4332]/15 shadow-sm max-w-xl"
+          >
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <div className="flex items-center gap-2">
+                <Award className="w-4 h-4 text-amber-600" aria-hidden="true" />
+                <span className="text-xs font-extrabold uppercase tracking-wider text-[#1B4332]">
+                  Logros y Medallas ({unlockedCount}/{ACHIEVEMENTS.length})
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAchievements(true)}
+                className="inline-flex items-center gap-1 text-xs font-extrabold text-amber-800 hover:text-amber-950 cursor-pointer"
+              >
+                <span>Ver todas</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-4 gap-2.5">
+              {ACHIEVEMENTS.slice(0, 4).map((ach) => {
+                const unlocked = isAchievementUnlocked(ach, save);
+                return (
+                  <button
+                    key={ach.id}
+                    type="button"
+                    onClick={() => setShowAchievements(true)}
+                    title={`${ach.title}: ${ach.description}`}
+                    className={`p-2 rounded-xl border flex flex-col items-center text-center gap-1.5 transition-all cursor-pointer ${
+                      unlocked
+                        ? 'bg-amber-50/80 border-amber-300 hover:border-amber-500'
+                        : 'bg-[#FBF9F2] border-[#1B4332]/10 hover:border-[#1B4332]/25'
+                    }`}
+                  >
+                    <AchievementBadge
+                      iconKey={ach.iconKey}
+                      tier={ach.tier}
+                      unlocked={unlocked}
+                      size="sm"
+                    />
+                    <span className="text-[11px] font-bold text-[#1A2E22] leading-tight line-clamp-2">
+                      {ach.title}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
         </div>
       </main>
 
       {/* Single Flat Control-Hint Line */}
       <footer className="relative z-10 px-6 sm:px-10 pb-4 pt-2 flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm font-medium text-white/95">
-        <span>Toca las palabras · Enter Iniciar · H Pista · M Sonido</span>
-        <span className="text-white/80">12 Niveles · 12 Tesoros por descubrir</span>
+        <span>Toca las palabras o dibujos · Enter Iniciar · H Pista · M Sonido</span>
+        <span className="text-white/80">12 Niveles · 8 Medallas · Modo Solo Imágenes</span>
       </footer>
+
+      {showAchievements && (
+        <AchievementsModal save={save} onClose={() => setShowAchievements(false)} />
+      )}
     </div>
   );
 };

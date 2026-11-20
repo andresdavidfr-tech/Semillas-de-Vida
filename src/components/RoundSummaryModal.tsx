@@ -1,9 +1,11 @@
 import React from 'react';
-import { Star, ArrowRight, RotateCcw, Sprout, Map } from 'lucide-react';
+import { Star, ArrowRight, RotateCcw, Sprout, Map, Award } from 'lucide-react';
 import { VerseLevel } from '../data/verses';
 import { CharacterId, getCharacterById } from '../data/characters';
+import { AchievementDefinition } from '../data/achievements';
 import { RewardEmblem } from './RewardEmblem';
 import { CharacterAvatar } from './CharacterAvatar';
+import { AchievementBadge } from './AchievementBadge';
 
 interface RoundSummaryModalProps {
   level: VerseLevel;
@@ -12,6 +14,7 @@ interface RoundSummaryModalProps {
   seedsEarned: number;
   accuracy: number;
   isNewUnlock: boolean;
+  newlyUnlockedAchievements: AchievementDefinition[];
   hasNextLevel: boolean;
   onNextLevel: () => void;
   onReplay: () => void;
@@ -26,6 +29,7 @@ export const RoundSummaryModal: React.FC<RoundSummaryModalProps> = ({
   seedsEarned,
   accuracy,
   isNewUnlock,
+  newlyUnlockedAchievements,
   hasNextLevel,
   onNextLevel,
   onReplay,
@@ -51,7 +55,10 @@ export const RoundSummaryModal: React.FC<RoundSummaryModalProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center justify-center gap-2" aria-label={`Ganaste ${stars} de 3 estrellas`}>
+          <div
+            className="flex items-center justify-center gap-2"
+            aria-label={`Ganaste ${stars} de 3 estrellas`}
+          >
             {[1, 2, 3].map((n) => (
               <Star
                 key={n}
@@ -77,16 +84,44 @@ export const RoundSummaryModal: React.FC<RoundSummaryModalProps> = ({
           >
             {level.reward.name}
           </h1>
-          <p className="text-sm text-[#1A2E22]/75 mt-1">
-            {level.reward.description}
-          </p>
+          <p className="text-sm text-[#1A2E22]/75 mt-1">{level.reward.description}</p>
         </div>
+
+        {/* Newly Unlocked Medals Banner */}
+        {newlyUnlockedAchievements.length > 0 && (
+          <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-400 rounded-2xl p-4 space-y-3 text-left">
+            <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-amber-900">
+              <Award className="w-4 h-4 text-amber-600" />
+              <span>
+                {newlyUnlockedAchievements.length === 1
+                  ? '¡Nueva Medalla Desbloqueada!'
+                  : '¡Nuevas Medallas Desbloqueadas!'}
+              </span>
+            </div>
+            <div className="space-y-2">
+              {newlyUnlockedAchievements.map((ach) => (
+                <div key={ach.id} className="flex items-center gap-3">
+                  <AchievementBadge
+                    iconKey={ach.iconKey}
+                    tier={ach.tier}
+                    unlocked
+                    size="sm"
+                  />
+                  <div>
+                    <div className="font-display text-base font-bold text-[#1B4332]">
+                      {ach.title}
+                    </div>
+                    <div className="text-xs text-[#1A2E22]/75">{ach.description}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Memorized Verse Keepsake */}
         <div className="bg-white rounded-2xl p-5 border border-[#1B4332]/15 space-y-2">
-          <div className="text-xs font-mono font-bold text-amber-800">
-            {level.reference}
-          </div>
+          <div className="text-xs font-mono font-bold text-amber-800">{level.reference}</div>
           <p className="font-display text-xl font-bold text-[#1A2E22] leading-relaxed">
             “{level.verseText}”
           </p>
