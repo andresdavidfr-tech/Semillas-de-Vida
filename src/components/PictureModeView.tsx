@@ -423,11 +423,16 @@ export const PictureModeView: React.FC<PictureModeViewProps> = ({
       );
 
       if (nextPlaced.length === activeLevel.scenes.length) {
+        clearScheduledSpeech();
+        const winSeq = speechSeqRef.current;
         sound.playLevelWin();
         const stars = mistakes <= 1 ? 3 : mistakes <= 3 ? 2 : 1;
         onCompletePictureLevel(activeLevel.id, stars, 20);
         setPhase('VICTORY');
-        speakPrompt(`¡Excelente! ${activeLevel.fullSpokenVerse}`);
+        stepTimerRef.current = window.setTimeout(() => {
+          if (speechSeqRef.current !== winSeq) return;
+          speakPrompt(`¡Excelente! ${activeLevel.fullSpokenVerse}`);
+        }, 1100);
       } else {
         speakPrompt(tile.scene.spokenPhrase);
       }
@@ -472,8 +477,8 @@ export const PictureModeView: React.FC<PictureModeViewProps> = ({
     <div className="min-h-screen bg-[#FFFDF5] text-[#1A2E22] flex flex-col">
       {/* Kid-friendly Visual Top Bar */}
       <header className="bg-[#1B4332] text-white px-4 sm:px-8 py-3.5 shadow-sm">
-        <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+        <div className="max-w-5xl mx-auto flex flex-col items-center gap-2.5 md:grid md:grid-cols-[1fr_auto_1fr] md:items-center">
+          <div className="flex items-center justify-between w-full md:w-auto">
             <button
               type="button"
               onClick={() => {
@@ -488,21 +493,31 @@ export const PictureModeView: React.FC<PictureModeViewProps> = ({
                 }
               }}
               aria-label="Volver"
-              className="w-11 h-11 rounded-2xl bg-white/15 hover:bg-white/25 flex items-center justify-center transition-colors cursor-pointer"
+              className="w-11 h-11 rounded-2xl bg-white/15 hover:bg-white/25 flex items-center justify-center transition-colors cursor-pointer shrink-0"
             >
               <ArrowLeft className="w-6 h-6" />
             </button>
-            <div>
-              <h1 className="font-display text-lg sm:text-xl font-bold leading-tight">
+            <div className="text-center md:hidden flex-1 px-2">
+              <h1 className="font-display text-lg font-bold leading-tight">
                 Aventura Solo Imágenes
               </h1>
               <p className="text-xs text-amber-200 font-semibold">
                 Escucha y toca los dibujos · {completedCount}/{PICTURE_LEVELS.length}
               </p>
             </div>
+            <div className="w-11 md:hidden" aria-hidden="true" />
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="hidden md:block text-center px-4">
+            <h1 className="font-display text-xl font-bold leading-tight">
+              Aventura Solo Imágenes
+            </h1>
+            <p className="text-xs text-amber-200 font-semibold">
+              Escucha y toca los dibujos · {completedCount}/{PICTURE_LEVELS.length}
+            </p>
+          </div>
+
+          <div className="flex items-center justify-center md:justify-end gap-2">
             <button
               type="button"
               disabled={speechLoading}

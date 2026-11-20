@@ -44,17 +44,17 @@ export const WorldMap: React.FC<WorldMapProps> = ({
     <div className="min-h-screen bg-[#FBF9F2] text-[#1A2E22] flex flex-col">
       {/* Compact Game HUD Header */}
       <header className="sticky top-0 z-20 bg-[#1B4332] text-white px-4 sm:px-8 py-3.5 shadow-sm">
-        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+        <div className="max-w-6xl mx-auto flex flex-col items-center gap-3 lg:grid lg:grid-cols-[1fr_auto_1fr] lg:items-center">
+          <div className="flex items-center justify-between w-full lg:w-auto">
             <button
               type="button"
               onClick={onBackTitle}
               aria-label="Volver al inicio"
-              className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors cursor-pointer"
+              className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors cursor-pointer shrink-0"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <div>
+            <div className="text-center lg:hidden flex-1 px-2">
               <h1 className="font-display text-lg sm:text-xl font-bold leading-tight">
                 Mapa de Versículos
               </h1>
@@ -62,11 +62,20 @@ export const WorldMap: React.FC<WorldMapProps> = ({
                 {completedCount} de {VERSE_LEVELS.length} versículos memorizados
               </p>
             </div>
+            <div className="w-10 lg:hidden" aria-hidden="true" />
           </div>
 
-          <div className="flex items-center gap-2.5 sm:gap-4 flex-wrap">
+          <div className="hidden lg:block text-center px-4">
+            <h1 className="font-display text-xl font-bold leading-tight">
+              Mapa de Versículos
+            </h1>
+            <p className="text-xs text-emerald-100/85">
+              {completedCount} de {VERSE_LEVELS.length} versículos memorizados
+            </p>
+          </div>
 
-            <div className="flex items-center gap-4 text-sm font-bold font-mono tabular-nums px-2">
+          <div className="flex items-center justify-center lg:justify-end gap-2.5 sm:gap-3 flex-wrap">
+            <div className="flex items-center gap-3 text-sm font-bold font-mono tabular-nums px-1">
               <span className="inline-flex items-center gap-1.5 text-amber-300">
                 <Star className="w-4 h-4 fill-amber-300" aria-hidden="true" />
                 {totalStars}/{maxStars}

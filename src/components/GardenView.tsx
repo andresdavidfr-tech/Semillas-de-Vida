@@ -79,33 +79,33 @@ export const GardenView: React.FC<GardenViewProps> = ({ save, onBack, onPlayLeve
     <div className="min-h-screen bg-[#FBF9F2] text-[#1A2E22] flex flex-col">
       {/* Compact Header */}
       <header className="sticky top-0 z-20 bg-[#1B4332] text-white px-4 sm:px-8 py-3.5 shadow-sm">
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={onBack}
-              className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors cursor-pointer"
-              aria-label="Volver al mapa"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <div>
-              <h1 className="font-display text-lg sm:text-xl font-bold">
-                Mi Jardín y Tesoros
-              </h1>
-              <p className="text-xs text-emerald-100/85">
-                {completedCount} de {VERSE_LEVELS.length} frutos · ★ {totalStars} estrellas · {save.totalSeeds} semillas
-              </p>
-            </div>
+        <div className="max-w-6xl mx-auto grid grid-cols-[auto_1fr_auto] items-center gap-3">
+          <button
+            type="button"
+            onClick={onBack}
+            className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors cursor-pointer justify-self-start"
+            aria-label="Volver al mapa"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+
+          <div className="text-center min-w-0 px-2">
+            <h1 className="font-display text-lg sm:text-xl font-bold truncate">
+              Mi Jardín y Tesoros
+            </h1>
+            <p className="text-xs text-emerald-100/85 truncate">
+              {completedCount} de {VERSE_LEVELS.length} frutos · ★ {totalStars} estrellas · {save.totalSeeds} semillas
+            </p>
           </div>
 
           <button
             type="button"
             onClick={onBack}
-            className="px-4 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-sm font-bold transition-colors cursor-pointer whitespace-nowrap"
+            className="hidden sm:inline-flex px-4 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-sm font-bold transition-colors cursor-pointer whitespace-nowrap justify-self-end"
           >
             Volver al Mapa
           </button>
+          <div className="w-10 sm:hidden" aria-hidden="true" />
         </div>
       </header>
 

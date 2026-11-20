@@ -265,6 +265,8 @@ class SoundManager {
   private musicSource: AudioBufferSourceNode | null = null;
   private loopBuffers = new Map<MusicMood, AudioBuffer>();
   private renderingMoods = new Set<MusicMood>();
+  private noiseBuffer: AudioBuffer | null = null;
+  private celebrationDuckTimer: number | null = null;
 
   private muted: boolean = false;
   private musicEnabled: boolean = true;
@@ -499,6 +501,113 @@ class SoundManager {
     this.playTone(195, 0.18, 'triangle', 0.08, 0.08);
   }
 
+  private getNoiseBuffer(ctx: AudioContext): AudioBuffer {
+    if (this.noiseBuffer && this.noiseBuffer.sampleRate === ctx.sampleRate) {
+      return this.noiseBuffer;
+    }
+    const length = Math.floor(ctx.sampleRate * 0.25);
+    const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < length; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+    this.noiseBuffer = buffer;
+    return buffer;
+  }
+
+  private playApplause(ctx: AudioContext, startDelay: number = 0.1): void {
+    const buffer = this.getNoiseBuffer(ctx);
+    const destination = this.compressor ?? ctx.destination;
+    const clapCount = 28;
+    const totalSpan = 1.95;
+
+    for (let i = 0; i < clapCount; i++) {
+      const progress = i / (clapCount - 1);
+      // Slight natural jitter so claps sound like a warm crowd rather than a machine
+      const jitter = (Math.random() - 0.5) * 0.055;
+      const t = ctx.currentTime + startDelay + Math.max(0, progress * totalSpan + jitter);
+      const clapDur = 0.042 + Math.random() * 0.028;
+
+      // Swell up quickly then gently fade out
+      const envelopeScale =
+        progress < 0.25
+          ? 0.45 + (progress / 0.25) * 0.55
+          : progress > 0.7
+          ? Math.max(0.18, 1 - ((progress - 0.7) / 0.3) * 0.82)
+          : 1;
+      const peakGain = (0.048 + Math.random() * 0.032) * envelopeScale;
+
+      const src = ctx.createBufferSource();
+      src.buffer = buffer;
+
+      const bandpass = ctx.createBiquadFilter();
+      bandpass.type = 'bandpass';
+      bandpass.frequency.setValueAtTime(900 + Math.random() * 1400, t);
+      bandpass.Q.setValueAtTime(1.4 + Math.random() * 1.1, t);
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.linearRampToValueAtTime(peakGain, t + 0.004);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + clapDur);
+
+      src.connect(bandpass);
+      bandpass.connect(gain);
+
+      if (typeof ctx.createStereoPanner === 'function') {
+        const panner = ctx.createStereoPanner();
+        panner.pan.setValueAtTime((Math.random() * 2 - 1) * 0.75, t);
+        gain.connect(panner);
+        panner.connect(destination);
+      } else {
+        gain.connect(destination);
+      }
+
+      const offset = Math.random() * 0.14;
+      src.start(t, offset, clapDur + 0.015);
+      src.stop(t + clapDur + 0.02);
+    }
+  }
+
+  private playSparkles(ctx: AudioContext, startDelay: number = 0.28): void {
+    const sparkleNotes = [
+      1046.5, // C6
+      1318.51, // E6
+      1567.98, // G6
+      2093.0, // C7
+      1760.0, // A6
+      2349.32, // D7
+      2637.02, // E7
+      2093.0, // C7
+      3135.96, // G7
+    ];
+    const destination = this.compressor ?? ctx.destination;
+
+    sparkleNotes.forEach((freq, idx) => {
+      const t = ctx.currentTime + startDelay + idx * 0.11;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, t);
+
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.linearRampToValueAtTime(0.055, t + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.36);
+
+      osc.connect(gain);
+      if (typeof ctx.createStereoPanner === 'function') {
+        const panner = ctx.createStereoPanner();
+        panner.pan.setValueAtTime(((idx % 2 === 0 ? -1 : 1) * (0.2 + (idx % 3) * 0.2)), t);
+        gain.connect(panner);
+        panner.connect(destination);
+      } else {
+        gain.connect(destination);
+      }
+
+      osc.start(t);
+      osc.stop(t + 0.38);
+    });
+  }
+
   public playStageClear(): void {
     const notes = [523.25, 659.25, 783.99];
     notes.forEach((n, idx) => {
@@ -507,10 +616,37 @@ class SoundManager {
   }
 
   public playLevelWin(): void {
-    const notes = [523.25, 659.25, 783.99, 1046.5];
-    notes.forEach((n, idx) => {
-      this.playTone(n, 0.28, 'triangle', 0.13, idx * 0.09);
+    this.unlockAndStartMusic();
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    // Duck background music briefly so celebration shines
+    if (this.celebrationDuckTimer !== null) {
+      window.clearTimeout(this.celebrationDuckTimer);
+    }
+    this.setMusicDucked(true);
+    this.celebrationDuckTimer = window.setTimeout(() => {
+      this.celebrationDuckTimer = null;
+      if (!this.currentAudio && !this.abortController) {
+        this.setMusicDucked(false);
+      }
+    }, 2300);
+
+    // 1. Bright celebratory fanfare arpeggio + warm chord
+    const fanfare = [523.25, 659.25, 783.99, 1046.5, 1318.51];
+    fanfare.forEach((n, idx) => {
+      this.playTone(n, 0.34, 'triangle', 0.13, idx * 0.085);
+      this.playTone(n * 2, 0.24, 'sine', 0.045, idx * 0.085);
     });
+
+    // Sustained triumphant C major chord
+    [261.63, 329.63, 392.0, 523.25].forEach((n) => {
+      this.playTone(n, 1.15, 'sine', 0.055, 0.34);
+    });
+
+    // 2. Warm crowd applause + magical sparkles
+    this.playApplause(ctx, 0.12);
+    this.playSparkles(ctx, 0.32);
   }
 
   public async speakVerse(

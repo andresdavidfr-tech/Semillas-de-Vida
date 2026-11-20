@@ -429,8 +429,8 @@ export const GameplayView: React.FC<GameplayViewProps> = ({
     <div className="min-h-screen bg-[#FBF9F2] text-[#1A2E22] flex flex-col">
       {/* Unobtrusive Top HUD */}
       <header className="bg-[#1B4332] text-white px-4 sm:px-8 py-3 shadow-sm">
-        <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+        <div className="max-w-5xl mx-auto flex flex-col items-center gap-2.5 md:grid md:grid-cols-[1fr_auto_1fr] md:items-center">
+          <div className="flex items-center justify-between w-full md:w-auto">
             <button
               type="button"
               onClick={() => {
@@ -439,21 +439,31 @@ export const GameplayView: React.FC<GameplayViewProps> = ({
                 onExitToMap();
               }}
               aria-label="Salir al mapa"
-              className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors cursor-pointer"
+              className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors cursor-pointer shrink-0"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <div>
+            <div className="text-center md:hidden flex-1 px-2">
               <div className="text-xs font-mono text-amber-300 font-bold">
                 Nivel {level.levelNumber} · {level.reference}
               </div>
-              <div className="font-display text-base sm:text-lg font-bold leading-tight">
+              <div className="font-display text-base font-bold leading-tight">
                 {level.reward.name}
               </div>
             </div>
+            <div className="w-10 md:hidden" aria-hidden="true" />
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="hidden md:block text-center px-4">
+            <div className="text-xs font-mono text-amber-300 font-bold">
+              Nivel {level.levelNumber} · {level.reference}
+            </div>
+            <div className="font-display text-lg font-bold leading-tight">
+              {level.reward.name}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-center md:justify-end gap-2">
             <button
               type="button"
               disabled={speechLoading}

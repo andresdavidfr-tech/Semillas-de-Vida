@@ -27,19 +27,17 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({ save, onCl
     >
       <div className="bg-[#FBF9F2] text-[#1A2E22] rounded-3xl max-w-3xl w-full max-h-[88vh] flex flex-col border-2 border-amber-400 shadow-2xl overflow-hidden animate-gentle-pop">
         {/* Header */}
-        <div className="bg-[#1B4332] text-white px-6 py-5 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-amber-400 text-[#1A2E22] flex items-center justify-center">
-              <Award className="w-6 h-6" />
-            </div>
-            <div>
-              <h2 id="achievements-modal-title" className="font-display text-2xl font-bold">
-                Mis Logros y Medallas
-              </h2>
-              <p className="text-xs sm:text-sm text-emerald-100/90">
-                {unlockedCount} de {ACHIEVEMENTS.length} medallas desbloqueadas
-              </p>
-            </div>
+        <div className="bg-[#1B4332] text-white px-6 py-5 grid grid-cols-[40px_1fr_40px] items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-amber-400 text-[#1A2E22] flex items-center justify-center">
+            <Award className="w-5 h-5" />
+          </div>
+          <div className="text-center">
+            <h2 id="achievements-modal-title" className="font-display text-xl sm:text-2xl font-bold">
+              Mis Logros y Medallas
+            </h2>
+            <p className="text-xs sm:text-sm text-emerald-100/90">
+              {unlockedCount} de {ACHIEVEMENTS.length} medallas desbloqueadas
+            </p>
           </div>
 
           <button

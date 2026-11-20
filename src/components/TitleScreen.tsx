@@ -5,7 +5,6 @@ import {
   Music,
   Sprout,
   Play,
-  BookOpen,
   Award,
   Images,
   ChevronRight,
@@ -96,117 +95,91 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
       </div>
 
       {/* Top Minimal Floating Controls */}
-      <header className="relative z-10 w-full max-w-6xl mx-auto flex items-center justify-between px-6 sm:px-10 pt-5 gap-3 flex-wrap">
-        <div className="flex items-center gap-2 text-sm font-semibold text-[#1B4332]">
-          <BookOpen className="w-4 h-4 text-amber-700" aria-hidden="true" />
-          <span>Semillas de Vida</span>
-        </div>
+      <header className="relative z-10 w-full max-w-6xl mx-auto flex flex-wrap items-center justify-center px-6 sm:px-10 pt-5 gap-2.5">
+        <button
+          type="button"
+          onClick={() => setShowAchievements(true)}
+          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-100/95 hover:bg-amber-200 text-[#1B4332] font-bold text-sm border border-amber-400 shadow-sm transition-transform duration-150 active:scale-95 whitespace-nowrap cursor-pointer"
+        >
+          <Award className="w-4 h-4 text-amber-700" aria-hidden="true" />
+          <span>Logros</span>
+          <span className="font-mono tabular-nums text-amber-800">
+            {unlockedCount}/{ACHIEVEMENTS.length}
+          </span>
+        </button>
 
-        <div className="flex items-center gap-2.5 flex-wrap">
+        {completedCount > 0 && (
           <button
             type="button"
-            onClick={() => setShowAchievements(true)}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-100/95 hover:bg-amber-200 text-[#1B4332] font-bold text-sm border border-amber-400 shadow-sm transition-transform duration-150 active:scale-95 whitespace-nowrap cursor-pointer"
+            onClick={onOpenGarden}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/90 hover:bg-white text-[#1B4332] font-semibold text-sm border border-[#1B4332]/15 shadow-sm transition-transform duration-150 active:scale-95 whitespace-nowrap cursor-pointer"
           >
-            <Award className="w-4 h-4 text-amber-700" aria-hidden="true" />
-            <span>Logros</span>
-            <span className="font-mono tabular-nums text-amber-800">
-              {unlockedCount}/{ACHIEVEMENTS.length}
+            <Sprout className="w-4 h-4 text-emerald-600" aria-hidden="true" />
+            <span>Mi Jardín</span>
+            <span className="font-mono tabular-nums text-amber-700">
+              {completedCount}/{totalLevels}
             </span>
           </button>
-
-          {completedCount > 0 && (
-            <button
-              type="button"
-              onClick={onOpenGarden}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/90 hover:bg-white text-[#1B4332] font-semibold text-sm border border-[#1B4332]/15 shadow-sm transition-transform duration-150 active:scale-95 whitespace-nowrap cursor-pointer"
-            >
-              <Sprout className="w-4 h-4 text-emerald-600" aria-hidden="true" />
-              <span>Mi Jardín</span>
-              <span className="font-mono tabular-nums text-amber-700">
-                {completedCount}/{totalLevels}
-              </span>
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={onToggleMusic}
-            aria-label={musicEnabled ? 'Pausar música ambiental' : 'Activar música ambiental'}
-            title={musicEnabled ? 'Música ambiental activa' : 'Música ambiental pausada'}
-            className={`h-11 px-3 rounded-xl border shadow-sm flex items-center gap-1.5 text-xs font-bold transition-all duration-150 active:scale-95 cursor-pointer ${
-              musicEnabled && !muted
-                ? 'bg-emerald-50 text-[#1B4332] border-emerald-300'
-                : 'bg-white/90 text-[#1B4332]/60 border-[#1B4332]/15'
-            }`}
-          >
-            <Music className="w-4 h-4" />
-            <span className="hidden sm:inline">
-              {musicEnabled && !muted ? 'Música' : 'Sin música'}
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={onToggleMute}
-            aria-label={muted ? 'Activar sonido' : 'Silenciar sonido'}
-            className="w-11 h-11 rounded-xl bg-white/90 hover:bg-white text-[#1B4332] border border-[#1B4332]/15 shadow-sm flex items-center justify-center transition-transform duration-150 active:scale-95 cursor-pointer"
-          >
-            {muted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-          </button>
-        </div>
+        )}
+        <button
+          type="button"
+          onClick={onToggleMusic}
+          aria-label={musicEnabled ? 'Pausar música ambiental' : 'Activar música ambiental'}
+          title={musicEnabled ? 'Música ambiental activa' : 'Música ambiental pausada'}
+          className={`h-11 px-3 rounded-xl border shadow-sm flex items-center gap-1.5 text-xs font-bold transition-all duration-150 active:scale-95 cursor-pointer ${
+            musicEnabled && !muted
+              ? 'bg-emerald-50 text-[#1B4332] border-emerald-300'
+              : 'bg-white/90 text-[#1B4332]/60 border-[#1B4332]/15'
+          }`}
+        >
+          <Music className="w-4 h-4" />
+          <span className="hidden sm:inline">
+            {musicEnabled && !muted ? 'Música' : 'Sin música'}
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={onToggleMute}
+          aria-label={muted ? 'Activar sonido' : 'Silenciar sonido'}
+          className="w-11 h-11 rounded-xl bg-white/90 hover:bg-white text-[#1B4332] border border-[#1B4332]/15 shadow-sm flex items-center justify-center transition-transform duration-150 active:scale-95 cursor-pointer"
+        >
+          {muted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+        </button>
       </header>
 
       {/* Main Hero Lockup + Companion Selector + Achievements Section */}
       <main className="relative z-10 flex-1 flex items-center justify-center px-6 sm:px-10 py-6">
         <div className="max-w-2xl w-full mx-auto flex flex-col items-center text-center space-y-5">
-          {/* Bespoke Inline SVG Title Lockup */}
+          {/* Centered Bespoke Title Lockup */}
           <div className="flex flex-col items-center">
-            <svg
-              viewBox="0 0 460 112"
-              className="w-full max-w-[380px] h-auto mx-auto"
-              role="img"
-              aria-label="Semillas de Vida"
-            >
-              <g transform="translate(4, 10)">
+            <div className="inline-flex items-center justify-center gap-3 sm:gap-4">
+              <svg
+                viewBox="0 0 68 82"
+                className="w-14 h-16 sm:w-16 sm:h-20 shrink-0"
+                aria-hidden="true"
+              >
                 <path
-                  d="M28 58 C28 32, 48 14, 62 12 C60 32, 48 52, 28 58 Z"
+                  d="M32 54 C32 28, 52 10, 66 8 C64 28, 52 48, 32 54 Z"
                   fill="#15803D"
                 />
                 <path
-                  d="M28 58 C12 44, 6 26, 12 12 C24 18, 30 36, 28 58 Z"
+                  d="M32 54 C16 40, 10 22, 16 8 C28 14, 34 32, 32 54 Z"
                   fill="#22C55E"
                 />
-                <circle cx="34" cy="70" r="6" fill="#D97706" />
+                <circle cx="38" cy="66" r="6" fill="#D97706" />
                 <path
-                  d="M28 56 L28 76"
+                  d="M32 52 L32 74"
                   stroke="#78350F"
                   strokeWidth="3.5"
                   strokeLinecap="round"
                 />
-              </g>
-              <text
-                x="80"
-                y="52"
-                fill="#1B4332"
-                fontFamily="Fraunces, Georgia, serif"
-                fontWeight="700"
-                fontSize="42"
-                letterSpacing="-0.5"
-              >
-                Semillas de
-              </text>
-              <text
-                x="80"
-                y="96"
-                fill="#B45309"
-                fontFamily="Fraunces, Georgia, serif"
-                fontWeight="700"
-                fontSize="44"
-                letterSpacing="-0.5"
-              >
-                Vida
-              </text>
-            </svg>
-            <p className="text-base sm:text-lg text-[#1A2E22] font-medium leading-relaxed mt-1 max-w-lg mx-auto text-center text-balance">
+              </svg>
+              <h1 className="font-display text-4xl sm:text-5xl font-bold leading-[1.02] tracking-tight text-center">
+                <span className="block text-[#1B4332]">Semillas de</span>
+                <span className="block text-[#B45309]">Vida</span>
+              </h1>
+            </div>
+            <p className="text-base sm:text-lg text-[#1A2E22] font-medium leading-relaxed mt-3 max-w-lg mx-auto text-center text-balance">
               Elige a tu amigo de aventura para aprender, ordenar y atesorar versículos de la Biblia.
             </p>
           </div>
