@@ -646,7 +646,7 @@ export const GameplayView: React.FC<GameplayViewProps> = ({
               {spanishVoices.length > 0 && onChangePreferredVoice && (
                 <div className="pt-1 flex flex-wrap items-center justify-center gap-2 text-xs text-[#1A2E22]/70">
                   <label htmlFor="voice-select" className="font-semibold">
-                    Voz gratuita:
+                    Voz del narrador:
                   </label>
                   <select
                     id="voice-select"
@@ -655,12 +655,12 @@ export const GameplayView: React.FC<GameplayViewProps> = ({
                       const val = e.target.value || undefined;
                       onChangePreferredVoice(val);
                     }}
-                    className="bg-[#FBF9F2] border border-[#1B4332]/20 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-[#1B4332] max-w-[260px] cursor-pointer"
+                    className="bg-[#FBF9F2] border border-[#1B4332]/20 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-[#1B4332] max-w-[280px] cursor-pointer"
                   >
-                    <option value="">Automática (Mejor voz en español)</option>
+                    <option value="">Voz Neural Natural (Gratis - Recomendada)</option>
                     {spanishVoices.map((v) => (
                       <option key={v.voiceURI} value={v.voiceURI}>
-                        {v.name} ({v.lang})
+                        Dispositivo: {v.name} ({v.lang})
                       </option>
                     ))}
                   </select>

@@ -57,14 +57,24 @@ function scoreSpanishVoice(v: SpeechSynthesisVoice): number {
   return score;
 }
 
-// Peaceful uplifting progression in C Major / F Lydian warmth
-const CHORD_BASS = [130.81, 110.0, 87.31, 98.0];
+function base64ToBlobUrl(base64: string, mimeType: string): string {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  const blob = new Blob([bytes], { type: mimeType });
+  return URL.createObjectURL(blob);
+}
+
+// Peaceful uplifting progression in C Major / F Lydian warmth (4 bars x 8 eighth-notes = 32 steps)
+const CHORD_BASS = [130.81, 110.0, 87.31, 98.0]; // C3, A2, F2, G2
 
 const CHORD_PADS: number[][] = [
-  [261.63, 329.63, 392.0, 493.88],
-  [220.0, 261.63, 329.63, 392.0],
-  [174.61, 261.63, 329.63, 440.0],
-  [196.0, 293.66, 329.63, 493.88],
+  [261.63, 329.63, 392.0, 493.88], // Cmaj7
+  [220.0, 261.63, 329.63, 392.0], // Am7
+  [174.61, 261.63, 329.63, 440.0], // Fmaj7
+  [196.0, 293.66, 329.63, 493.88], // G6
 ];
 
 const MENU_ARPEGGIO: number[] = [
@@ -81,6 +91,13 @@ const PLAY_ARPEGGIO: number[] = [
   392.0, 587.33, 659.25, 783.99, 987.77, 783.99, 659.25, 587.33,
 ];
 
+const VICTORY_ARPEGGIO: number[] = [
+  523.25, 659.25, 783.99, 1046.5, 987.77, 783.99, 659.25, 783.99,
+  440.0, 523.25, 659.25, 880.0, 783.99, 659.25, 523.25, 659.25,
+  349.23, 440.0, 523.25, 880.0, 783.99, 659.25, 523.25, 659.25,
+  392.0, 587.33, 783.99, 987.77, 1046.5, 987.77, 783.99, 659.25,
+];
+
 const BELL_ACCENTS: Record<number, number> = {
   0: 1046.5,
   8: 880.0,
@@ -88,32 +105,200 @@ const BELL_ACCENTS: Record<number, number> = {
   24: 1174.66,
 };
 
+function scheduleOfflineVoice(
+  offline: OfflineAudioContext,
+  destination: AudioNode,
+  freq: number,
+  type: OscillatorType,
+  peakGain: number,
+  attack: number,
+  duration: number,
+  startTime: number,
+  panValue: number = 0,
+  lowpassHz?: number
+): void {
+  const osc = offline.createOscillator();
+  const gain = offline.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, startTime);
+
+  gain.gain.setValueAtTime(0.0001, startTime);
+  gain.gain.linearRampToValueAtTime(peakGain, startTime + attack);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+  let tailNode: AudioNode = gain;
+
+  if (lowpassHz) {
+    const filter = offline.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(lowpassHz, startTime);
+    osc.connect(filter);
+    filter.connect(gain);
+  } else {
+    osc.connect(gain);
+  }
+
+  if (typeof offline.createStereoPanner === 'function' && panValue !== 0) {
+    const pan = offline.createStereoPanner();
+    pan.pan.setValueAtTime(panValue, startTime);
+    gain.connect(pan);
+    tailNode = pan;
+  }
+
+  tailNode.connect(destination);
+  osc.start(startTime);
+  osc.stop(startTime + duration + 0.04);
+}
+
+function scheduleOfflineWoodTick(
+  offline: OfflineAudioContext,
+  destination: AudioNode,
+  startTime: number
+): void {
+  const osc = offline.createOscillator();
+  const gain = offline.createGain();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(430, startTime);
+  osc.frequency.exponentialRampToValueAtTime(195, startTime + 0.045);
+
+  gain.gain.setValueAtTime(0.0001, startTime);
+  gain.gain.linearRampToValueAtTime(0.028, startTime + 0.004);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.065);
+
+  osc.connect(gain);
+  gain.connect(destination);
+  osc.start(startTime);
+  osc.stop(startTime + 0.08);
+}
+
+async function renderAmbientLoopBuffer(
+  sampleRate: number,
+  mood: MusicMood
+): Promise<AudioBuffer | null> {
+  if (typeof window === 'undefined' || typeof OfflineAudioContext === 'undefined') {
+    return null;
+  }
+
+  const stepSec = mood === 'play' ? 0.28 : mood === 'victory' ? 0.30 : 0.34;
+  const totalSteps = 32;
+  const loopDuration = stepSec * totalSteps;
+  const tailOverlapSec = 2.0; // Extra render tail wrapped back into start for seamless loop
+  const renderLength = Math.ceil((loopDuration + tailOverlapSec) * sampleRate);
+  const loopSamples = Math.round(loopDuration * sampleRate);
+
+  const offline = new OfflineAudioContext(2, renderLength, sampleRate);
+  const master = offline.createGain();
+  master.gain.value = 0.92;
+  master.connect(offline.destination);
+
+  const pattern =
+    mood === 'play' ? PLAY_ARPEGGIO : mood === 'victory' ? VICTORY_ARPEGGIO : MENU_ARPEGGIO;
+
+  for (let step = 0; step < totalSteps; step++) {
+    const t = step * stepSec;
+    const bar = Math.floor(step / 8);
+    const beatInBar = step % 8;
+
+    if (beatInBar === 0) {
+      const padFreqs = CHORD_PADS[bar];
+      const padDuration = stepSec * 8 * 0.96;
+      scheduleOfflineVoice(offline, master, CHORD_BASS[bar], 'sine', 0.09, 0.12, padDuration, t, 0);
+      padFreqs.forEach((freq, idx) => {
+        const pan = idx % 2 === 0 ? -0.22 : 0.22;
+        scheduleOfflineVoice(offline, master, freq, 'triangle', 0.024, 0.32, padDuration, t, pan, 900);
+      });
+    }
+
+    const noteFreq = pattern[step];
+    if (noteFreq > 0) {
+      const vol = mood === 'play' ? 0.068 : 0.056;
+      const pan = ((step % 4) - 1.5) * 0.16;
+      // Kalimba / felt marimba primary pluck
+      scheduleOfflineVoice(offline, master, noteFreq, 'sine', vol, 0.012, 0.42, t, pan);
+      // Warm harmonic shimmer
+      scheduleOfflineVoice(offline, master, noteFreq * 2, 'sine', vol * 0.2, 0.008, 0.18, t, -pan);
+      // Soft echo repeat one dotted-eighth later
+      scheduleOfflineVoice(
+        offline,
+        master,
+        noteFreq,
+        'sine',
+        vol * 0.26,
+        0.015,
+        0.34,
+        t + stepSec * 1.5,
+        -pan * 0.8
+      );
+    }
+
+    const bellFreq = BELL_ACCENTS[step];
+    if (bellFreq) {
+      scheduleOfflineVoice(offline, master, bellFreq, 'sine', 0.025, 0.014, 0.85, t, 0.15);
+    }
+
+    if (mood === 'play' && (beatInBar === 2 || beatInBar === 6)) {
+      scheduleOfflineWoodTick(offline, master, t);
+    }
+  }
+
+  const rendered = await offline.startRendering();
+
+  // Fold the reverb/chord tail beyond loopDuration back onto the beginning so the loop never clicks
+  const cleanLoop = new AudioBuffer({
+    numberOfChannels: 2,
+    length: loopSamples,
+    sampleRate,
+  });
+
+  const extraSamples = Math.min(rendered.length - loopSamples, loopSamples);
+  for (let ch = 0; ch < 2; ch++) {
+    const src = rendered.getChannelData(ch);
+    const dst = cleanLoop.getChannelData(ch);
+    dst.set(src.subarray(0, loopSamples));
+    for (let i = 0; i < extraSamples; i++) {
+      dst[i] = Math.max(-0.98, Math.min(0.98, dst[i] + src[loopSamples + i]));
+    }
+  }
+
+  return cleanLoop;
+}
+
 class SoundManager {
   private ctx: AudioContext | null = null;
   private musicGain: GainNode | null = null;
+  private compressor: DynamicsCompressorNode | null = null;
+  private musicSource: AudioBufferSourceNode | null = null;
+  private loopBuffers = new Map<MusicMood, AudioBuffer>();
+  private renderingMoods = new Set<MusicMood>();
+
   private muted: boolean = false;
   private musicEnabled: boolean = true;
   private musicMood: MusicMood = 'menu';
   private musicRunning: boolean = false;
   private musicDucked: boolean = false;
-  private musicTimer: number | null = null;
-  private stepIndex: number = 0;
 
   private currentAudio: HTMLAudioElement | null = null;
   private audioCache = new Map<string, string>();
   private abortController: AbortController | null = null;
-  private serverTtsAvailable: boolean | null = null;
   private preferredVoiceURI: string | undefined = undefined;
   private cachedVoices: SpeechSynthesisVoice[] = [];
   private speechSessionId = 0;
 
   constructor() {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      const refresh = () => {
-        this.cachedVoices = window.speechSynthesis.getVoices();
-      };
-      refresh();
-      window.speechSynthesis.addEventListener?.('voiceschanged', refresh);
+    if (typeof window !== 'undefined') {
+      if ('speechSynthesis' in window) {
+        const refresh = () => {
+          this.cachedVoices = window.speechSynthesis.getVoices();
+        };
+        refresh();
+        window.speechSynthesis.addEventListener?.('voiceschanged', refresh);
+      }
+
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && this.musicRunning && this.ctx?.state === 'suspended' && !this.muted) {
+          void this.ctx.resume();
+        }
+      });
     }
   }
 
@@ -147,7 +332,7 @@ class SoundManager {
       this.stopSpeech();
       this.stopMusicLoop();
     } else if (this.musicEnabled && this.ctx) {
-      this.startMusic();
+      void this.startMusic();
     }
     this.updateMusicGain();
   }
@@ -161,13 +346,17 @@ class SoundManager {
     if (!enabled) {
       this.stopMusicLoop();
     } else if (!this.muted) {
-      this.startMusic();
+      void this.startMusic();
     }
     this.updateMusicGain();
   }
 
   public setMusicMood(mood: MusicMood): void {
+    if (this.musicMood === mood) return;
     this.musicMood = mood;
+    if (this.musicRunning && this.musicEnabled && !this.muted) {
+      void this.swapMoodBuffer(mood);
+    }
   }
 
   private getContext(): AudioContext | null {
@@ -179,10 +368,17 @@ class SoundManager {
     if (!this.ctx) {
       this.ctx = new AudioCtx();
     }
+    if (!this.compressor) {
+      this.compressor = this.ctx.createDynamicsCompressor();
+      this.compressor.threshold.value = -16;
+      this.compressor.knee.value = 18;
+      this.compressor.ratio.value = 3;
+      this.compressor.connect(this.ctx.destination);
+    }
     if (!this.musicGain) {
       this.musicGain = this.ctx.createGain();
-      this.musicGain.gain.value = this.musicDucked ? 0.16 : 0.72;
-      this.musicGain.connect(this.ctx.destination);
+      this.musicGain.gain.value = this.musicDucked ? 0.16 : 0.7;
+      this.musicGain.connect(this.compressor);
     }
     if (this.ctx.state === 'suspended') {
       void this.ctx.resume();
@@ -192,11 +388,11 @@ class SoundManager {
 
   private updateMusicGain(): void {
     if (!this.ctx || !this.musicGain) return;
-    const target = this.muted || !this.musicEnabled ? 0.0001 : this.musicDucked ? 0.16 : 0.72;
+    const target = this.muted || !this.musicEnabled ? 0.0001 : this.musicDucked ? 0.16 : 0.7;
     const now = this.ctx.currentTime;
     this.musicGain.gain.cancelScheduledValues(now);
     this.musicGain.gain.setValueAtTime(Math.max(this.musicGain.gain.value, 0.0001), now);
-    this.musicGain.gain.linearRampToValueAtTime(target, now + 0.22);
+    this.musicGain.gain.linearRampToValueAtTime(target, now + 0.25);
   }
 
   private setMusicDucked(ducked: boolean): void {
@@ -208,126 +404,94 @@ class SoundManager {
     if (this.muted || !this.musicEnabled) return;
     const ctx = this.getContext();
     if (!ctx) return;
-    this.startMusic();
+    if (!this.musicRunning) {
+      void this.startMusic();
+    }
   }
 
-  private startMusic(): void {
+  private async ensureLoopBuffer(mood: MusicMood, sampleRate: number): Promise<AudioBuffer | null> {
+    const existing = this.loopBuffers.get(mood);
+    if (existing) return existing;
+    if (this.renderingMoods.has(mood)) return null;
+
+    this.renderingMoods.add(mood);
+    try {
+      const rendered = await renderAmbientLoopBuffer(sampleRate, mood);
+      if (rendered) {
+        this.loopBuffers.set(mood, rendered);
+      }
+      return rendered;
+    } finally {
+      this.renderingMoods.delete(mood);
+    }
+  }
+
+  private async startMusic(): Promise<void> {
     if (this.musicRunning || this.muted || !this.musicEnabled) return;
     const ctx = this.getContext();
-    if (!ctx) return;
+    if (!ctx || !this.musicGain) return;
 
     this.musicRunning = true;
-    this.updateMusicGain();
+    const activeMood = this.musicMood;
+    const buffer = await this.ensureLoopBuffer(activeMood, ctx.sampleRate);
+    if (!buffer || !this.musicRunning || this.muted || !this.musicEnabled || !this.musicGain) {
+      this.musicRunning = false;
+      return;
+    }
 
-    const tick = () => {
-      if (!this.musicRunning || this.muted || !this.musicEnabled) return;
-      if (typeof document !== 'undefined' && document.hidden) {
-        this.musicTimer = window.setTimeout(tick, 400);
-        return;
+    // Pre-warm alternate moods in idle time so transitions are instant
+    const otherMoods: MusicMood[] = (['menu', 'play', 'victory'] as MusicMood[]).filter(
+      (m) => m !== activeMood && !this.loopBuffers.has(m)
+    );
+    otherMoods.forEach((m) => {
+      void this.ensureLoopBuffer(m, ctx.sampleRate);
+    });
+
+    this.startBufferLoop(ctx, buffer);
+  }
+
+  private async swapMoodBuffer(mood: MusicMood): Promise<void> {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    const buffer = await this.ensureLoopBuffer(mood, ctx.sampleRate);
+    if (!buffer || !this.musicRunning || this.muted || !this.musicEnabled || this.musicMood !== mood) {
+      return;
+    }
+    this.startBufferLoop(ctx, buffer);
+  }
+
+  private startBufferLoop(ctx: AudioContext, buffer: AudioBuffer): void {
+    if (!this.musicGain) return;
+    if (this.musicSource) {
+      try {
+        this.musicSource.stop();
+        this.musicSource.disconnect();
+      } catch {
+        // ignore previous source stop
       }
+      this.musicSource = null;
+    }
 
-      this.playMusicStep(this.stepIndex);
-      this.stepIndex = (this.stepIndex + 1) % 32;
-
-      const stepMs = this.musicMood === 'play' ? 275 : this.musicMood === 'victory' ? 300 : 335;
-      this.musicTimer = window.setTimeout(tick, stepMs);
-    };
-
-    tick();
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    src.loop = true;
+    src.connect(this.musicGain);
+    this.musicSource = src;
+    this.updateMusicGain();
+    src.start(0);
   }
 
   private stopMusicLoop(): void {
     this.musicRunning = false;
-    if (this.musicTimer !== null) {
-      window.clearTimeout(this.musicTimer);
-      this.musicTimer = null;
-    }
-  }
-
-  private playMusicStep(step: number): void {
-    const ctx = this.getContext();
-    if (!ctx || !this.musicGain) return;
-    const now = ctx.currentTime;
-    const bar = Math.floor(step / 8);
-    const beatInBar = step % 8;
-
-    if (beatInBar === 0) {
-      const padFreqs = CHORD_PADS[bar];
-      const padDuration = this.musicMood === 'play' ? 2.15 : 2.6;
-      this.playMusicVoice(CHORD_BASS[bar], 'sine', 0.055, 0.08, padDuration * 0.9, now);
-      for (const freq of padFreqs) {
-        this.playMusicVoice(freq, 'triangle', 0.015, 0.25, padDuration, now, 950);
+    if (this.musicSource) {
+      try {
+        this.musicSource.stop();
+        this.musicSource.disconnect();
+      } catch {
+        // ignore stop errors
       }
+      this.musicSource = null;
     }
-
-    const pattern = this.musicMood === 'play' ? PLAY_ARPEGGIO : MENU_ARPEGGIO;
-    const noteFreq = pattern[step];
-    if (noteFreq > 0) {
-      const vol = this.musicMood === 'play' ? 0.042 : 0.036;
-      this.playMusicVoice(noteFreq, 'sine', vol, 0.01, 0.34, now);
-      this.playMusicVoice(noteFreq * 2, 'sine', vol * 0.18, 0.006, 0.14, now);
-    }
-
-    const bellFreq = BELL_ACCENTS[step];
-    if (bellFreq) {
-      this.playMusicVoice(bellFreq, 'sine', 0.016, 0.01, 0.7, now);
-    }
-
-    if (this.musicMood === 'play' && (beatInBar === 2 || beatInBar === 6)) {
-      this.playWoodTick(now);
-    }
-  }
-
-  private playMusicVoice(
-    freq: number,
-    type: OscillatorType,
-    peakGain: number,
-    attack: number,
-    duration: number,
-    startTime: number,
-    lowpassHz?: number
-  ): void {
-    if (!this.ctx || !this.musicGain) return;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, startTime);
-
-    gain.gain.setValueAtTime(0.0001, startTime);
-    gain.gain.linearRampToValueAtTime(peakGain, startTime + attack);
-    gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
-
-    if (lowpassHz) {
-      const filter = this.ctx.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(lowpassHz, startTime);
-      osc.connect(filter);
-      filter.connect(gain);
-    } else {
-      osc.connect(gain);
-    }
-
-    gain.connect(this.musicGain);
-    osc.start(startTime);
-    osc.stop(startTime + duration + 0.03);
-  }
-
-  private playWoodTick(startTime: number): void {
-    if (!this.ctx || !this.musicGain) return;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(420, startTime);
-    osc.frequency.exponentialRampToValueAtTime(190, startTime + 0.045);
-
-    gain.gain.setValueAtTime(0.0001, startTime);
-    gain.gain.linearRampToValueAtTime(0.024, startTime + 0.004);
-    gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.06);
-
-    osc.connect(gain);
-    gain.connect(this.musicGain);
-    osc.start(startTime);
-    osc.stop(startTime + 0.07);
   }
 
   private playTone(
@@ -352,7 +516,7 @@ class SoundManager {
     gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
 
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.compressor ?? ctx.destination);
 
     osc.start(startTime);
     osc.stop(startTime + duration + 0.02);
@@ -389,25 +553,6 @@ class SoundManager {
     });
   }
 
-  private async checkServerTtsAvailable(): Promise<boolean> {
-    if (this.serverTtsAvailable !== null) {
-      return this.serverTtsAvailable;
-    }
-    try {
-      const res = await fetch('/api/tts', { method: 'GET' });
-      if (!res.ok) {
-        this.serverTtsAvailable = false;
-        return false;
-      }
-      const data = (await res.json().catch(() => ({}))) as { available?: boolean };
-      this.serverTtsAvailable = Boolean(data.available);
-      return this.serverTtsAvailable;
-    } catch {
-      this.serverTtsAvailable = false;
-      return false;
-    }
-  }
-
   public async speakVerse(
     reference: string,
     verseText: string,
@@ -427,21 +572,14 @@ class SoundManager {
     const fullText = `${spokenReference} ${verseText}`;
     const cacheKey = `${charId}:${ageGroup}:${fullText}`;
 
-    // If user explicitly picked a local browser voice, use free browser natural voice directly
+    // Only use local device speechSynthesis if user explicitly chose a specific device voice URI
     if (this.preferredVoiceURI) {
       this.speakWithFreeNaturalVoice(reference, verseText, options);
       return;
     }
 
-    const hasServerTts = await this.checkServerTtsAvailable();
-    if (!hasServerTts) {
-      // 100% Free zero-key path (ideal for Vercel without GEMINI_API_KEY)
-      this.speakWithFreeNaturalVoice(reference, verseText, options);
-      return;
-    }
-
-    const playDataUrl = async (dataUrl: string) => {
-      const audio = new Audio(dataUrl);
+    const playAudioUrl = async (url: string) => {
+      const audio = new Audio(url);
       this.currentAudio = audio;
       audio.onplay = () => {
         this.setMusicDucked(true);
@@ -467,7 +605,7 @@ class SoundManager {
     const cachedUrl = this.audioCache.get(cacheKey);
     if (cachedUrl) {
       try {
-        await playDataUrl(cachedUrl);
+        await playAudioUrl(cachedUrl);
       } catch {
         this.setMusicDucked(false);
         this.speakWithFreeNaturalVoice(reference, verseText, options);
@@ -495,19 +633,23 @@ class SoundManager {
       const payload = (await res.json().catch(() => ({}))) as {
         audioBase64?: string;
         mimeType?: string;
-        available?: boolean;
       };
 
       if (!res.ok || !payload.audioBase64) {
-        if (payload.available === false) {
-          this.serverTtsAvailable = false;
-        }
-        throw new Error('Fallback to free voice');
+        throw new Error('Server TTS unavailable');
       }
 
-      const mimeType = payload.mimeType || 'audio/wav';
-      const dataUrl = `data:${mimeType};base64,${payload.audioBase64}`;
-      this.audioCache.set(cacheKey, dataUrl);
+      const mimeType = payload.mimeType || 'audio/mpeg';
+      const blobUrl = base64ToBlobUrl(payload.audioBase64, mimeType);
+      if (this.audioCache.size > 40) {
+        const oldestKey = this.audioCache.keys().next().value;
+        if (oldestKey) {
+          const oldUrl = this.audioCache.get(oldestKey);
+          if (oldUrl) URL.revokeObjectURL(oldUrl);
+          this.audioCache.delete(oldestKey);
+        }
+      }
+      this.audioCache.set(cacheKey, blobUrl);
 
       if (controller.signal.aborted || this.muted) {
         this.setMusicDucked(false);
@@ -515,14 +657,14 @@ class SoundManager {
         return;
       }
 
-      await playDataUrl(dataUrl);
+      await playAudioUrl(blobUrl);
     } catch (err: unknown) {
       this.setMusicDucked(false);
       if (err instanceof DOMException && err.name === 'AbortError') {
         options?.onEnd?.();
         return;
       }
-      // Seamlessly use the free natural Spanish voice when server TTS isn't available
+      // Emergency offline safety net if there is no internet access
       this.speakWithFreeNaturalVoice(reference, verseText, options);
     } finally {
       if (this.abortController === controller) {
@@ -564,12 +706,10 @@ class SoundManager {
         ? /natural|neural|online|google|siri/i.test(chosenVoice.name)
         : false;
 
-      // Neural voices already sound bright; pitch ~1.04-1.08 keeps them natural without distortion
-      const pitch = isNaturalNeural ? 1.05 : Math.min(character.voicePitch, 1.14);
+      const pitch = isNaturalNeural ? 1.05 : Math.min(character.voicePitch, 1.12);
       const rate = options?.ageGroup === 'young' ? 0.88 : 0.94;
 
       const spokenReference = formatReferenceForSpeech(reference);
-      // Split verse into expressive natural clauses so browser TTS pauses naturally at punctuation
       const clauses = verseText
         .split(/(?<=[,;:.!?])\s+/)
         .map((s) => s.trim())
