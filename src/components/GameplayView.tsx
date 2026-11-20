@@ -11,7 +11,7 @@ import {
   Pause,
   Play,
 } from 'lucide-react';
-import { AgeGroup, VerseLevel, parseVerseWords } from '../data/verses';
+import { VerseLevel, parseVerseWords } from '../data/verses';
 import { CharacterId, getCharacterById } from '../data/characters';
 import { CharacterAvatar, AvatarMood } from './CharacterAvatar';
 import { sound } from '../utils/audio';
@@ -26,7 +26,6 @@ interface BankTile {
 
 interface GameplayViewProps {
   level: VerseLevel;
-  ageGroup: AgeGroup;
   characterId: CharacterId;
   muted: boolean;
   onToggleMute: () => void;
@@ -67,7 +66,6 @@ function pickBlankWordIndices(
 
 export const GameplayView: React.FC<GameplayViewProps> = ({
   level,
-  ageGroup,
   characterId,
   muted,
   onToggleMute,
@@ -93,24 +91,25 @@ export const GameplayView: React.FC<GameplayViewProps> = ({
   const parsedWords = useMemo(() => parseVerseWords(level.verseText), [level.verseText]);
 
   const blankIndicesStep1 = useMemo(() => {
-    const limit = ageGroup === 'young' ? 3 : level.blankWordsStep1.length;
-    return pickBlankWordIndices(parsedWords, level.blankWordsStep1, limit);
-  }, [parsedWords, level.blankWordsStep1, ageGroup]);
+    return pickBlankWordIndices(
+      parsedWords,
+      level.blankWordsStep1,
+      level.blankWordsStep1.length
+    );
+  }, [parsedWords, level.blankWordsStep1]);
 
   const blankIndicesStep3 = useMemo(() => {
-    const limit = ageGroup === 'young' ? 4 : level.blankWordsStep3.length;
-    return pickBlankWordIndices(parsedWords, level.blankWordsStep3, limit);
-  }, [parsedWords, level.blankWordsStep3, ageGroup]);
+    return pickBlankWordIndices(
+      parsedWords,
+      level.blankWordsStep3,
+      level.blankWordsStep3.length
+    );
+  }, [parsedWords, level.blankWordsStep3]);
 
   const [filledBlanks, setFilledBlanks] = useState<Record<number, string>>({});
   const [blankBank, setBlankBank] = useState<BankTile[]>([]);
 
-  const expectedOrderTokens = useMemo(() => {
-    if (ageGroup === 'young') {
-      return level.youngChunks;
-    }
-    return parsedWords.map((pw) => pw.raw);
-  }, [ageGroup, level.youngChunks, parsedWords]);
+  const expectedOrderTokens = useMemo(() => level.orderChunks, [level.orderChunks]);
 
   const [placedOrderTokens, setPlacedOrderTokens] = useState<string[]>([]);
   const [orderBank, setOrderBank] = useState<BankTile[]>([]);
@@ -124,7 +123,6 @@ export const GameplayView: React.FC<GameplayViewProps> = ({
     setSpeechError(null);
     void sound.speakVerse(level.reference, level.verseText, {
       characterId: character.id,
-      ageGroup,
       onLoading: () => setSpeechLoading(true),
       onStart: () => {
         setSpeechLoading(false);
@@ -140,7 +138,7 @@ export const GameplayView: React.FC<GameplayViewProps> = ({
         setSpeechError(msg);
       },
     });
-  }, [level.reference, level.verseText, character.id, ageGroup]);
+  }, [level.reference, level.verseText, character.id]);
 
   const initBlankStage = useCallback(
     (targetPhase: 'STEP_1_BLANKS' | 'STEP_3_MEMORY') => {

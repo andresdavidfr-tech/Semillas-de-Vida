@@ -1,12 +1,9 @@
 import React, { useEffect } from 'react';
 import { Volume2, VolumeX, Music, Sprout, Play, BookOpen } from 'lucide-react';
-import { AgeGroup } from '../data/verses';
 import { CharacterId, GAME_CHARACTERS, getCharacterById } from '../data/characters';
 import { CharacterAvatar } from './CharacterAvatar';
 
 interface TitleScreenProps {
-  ageGroup: AgeGroup;
-  onChangeAgeGroup: (group: AgeGroup) => void;
   characterId: CharacterId;
   onChangeCharacter: (id: CharacterId) => void;
   muted: boolean;
@@ -22,8 +19,6 @@ interface TitleScreenProps {
 }
 
 export const TitleScreen: React.FC<TitleScreenProps> = ({
-  ageGroup,
-  onChangeAgeGroup,
   characterId,
   onChangeCharacter,
   muted,
@@ -220,37 +215,8 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
             </p>
           </div>
 
-          {/* Age Mode Selector + Primary CTA */}
+          {/* Primary CTA */}
           <div className="flex flex-wrap items-center gap-4">
-            <div
-              className="inline-flex p-1.5 rounded-2xl bg-[#EAE4D2] border border-[#1B4332]/15 gap-1.5"
-              role="group"
-              aria-label="Selector de edad"
-            >
-              <button
-                type="button"
-                onClick={() => onChangeAgeGroup('young')}
-                className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-150 whitespace-nowrap cursor-pointer ${
-                  ageGroup === 'young'
-                    ? 'bg-white text-[#1B4332] shadow-sm'
-                    : 'text-[#1B4332]/70 hover:text-[#1B4332]'
-                }`}
-              >
-                Pequeños · 6–8 años
-              </button>
-              <button
-                type="button"
-                onClick={() => onChangeAgeGroup('explorer')}
-                className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-150 whitespace-nowrap cursor-pointer ${
-                  ageGroup === 'explorer'
-                    ? 'bg-white text-[#1B4332] shadow-sm'
-                    : 'text-[#1B4332]/70 hover:text-[#1B4332]'
-                }`}
-              >
-                Exploradores · 9–11 años
-              </button>
-            </div>
-
             <button
               type="button"
               onClick={onStart}

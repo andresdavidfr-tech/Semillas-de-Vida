@@ -1,11 +1,9 @@
 import { CharacterId } from '../data/characters';
-import { AgeGroup } from '../data/verses';
 
 export type MusicMood = 'menu' | 'play' | 'victory';
 
 export interface SpeakOptions {
   characterId?: CharacterId;
-  ageGroup?: AgeGroup;
   onLoading?: () => void;
   onStart?: () => void;
   onEnd?: () => void;
@@ -499,10 +497,9 @@ class SoundManager {
     this.stopSpeech();
 
     const charId = options?.characterId ?? 'lamb';
-    const ageGroup = options?.ageGroup ?? 'young';
     const spokenReference = formatReferenceForSpeech(reference);
     const fullText = `${spokenReference} ${verseText}`;
-    const cacheKey = `${charId}:${ageGroup}:${fullText}`;
+    const cacheKey = `${charId}:${fullText}`;
 
     const playAudioUrl = async (url: string) => {
       const audio = new Audio(url);
@@ -553,7 +550,6 @@ class SoundManager {
         body: JSON.stringify({
           text: fullText,
           characterId: charId,
-          ageGroup,
         }),
         signal: controller.signal,
       });

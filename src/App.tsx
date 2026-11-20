@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { AgeGroup, VERSE_LEVELS, VerseLevel } from './data/verses';
+import { VERSE_LEVELS, VerseLevel } from './data/verses';
 import { CharacterId } from './data/characters';
 import {
   SaveData,
@@ -58,11 +58,6 @@ export default function App() {
       window.removeEventListener('pointerdown', startOnFirstGesture);
       window.removeEventListener('keydown', startOnFirstGesture);
     };
-  }, []);
-
-  const handleChangeAgeGroup = useCallback((ageGroup: AgeGroup) => {
-    sound.playTap();
-    setSave((prev) => ({ ...prev, ageGroup }));
   }, []);
 
   const handleChangeCharacter = useCallback((characterId: CharacterId) => {
@@ -145,8 +140,6 @@ export default function App() {
   if (screen === 'TITLE_MENU') {
     return (
       <TitleScreen
-        ageGroup={save.ageGroup}
-        onChangeAgeGroup={handleChangeAgeGroup}
         characterId={save.characterId}
         onChangeCharacter={handleChangeCharacter}
         muted={save.muted}
@@ -182,7 +175,6 @@ export default function App() {
           sound.playTap();
           setScreen('TITLE_MENU');
         }}
-        onChangeAgeGroup={handleChangeAgeGroup}
         onChangeCharacter={handleChangeCharacter}
         onToggleMute={handleToggleMute}
         onToggleMusic={handleToggleMusic}
@@ -223,7 +215,6 @@ export default function App() {
       <GameplayView
         key={`${activeLevel.id}-${playInstanceKey}`}
         level={activeLevel}
-        ageGroup={save.ageGroup}
         characterId={save.characterId}
         muted={save.muted}
         onToggleMute={handleToggleMute}

@@ -1,4 +1,4 @@
-import { AgeGroup, VERSE_LEVELS } from '../data/verses';
+import { VERSE_LEVELS } from '../data/verses';
 import { CharacterId } from '../data/characters';
 
 export interface LevelProgress {
@@ -8,7 +8,6 @@ export interface LevelProgress {
 }
 
 export interface SaveData {
-  ageGroup: AgeGroup;
   characterId: CharacterId;
   muted: boolean;
   musicEnabled: boolean;
@@ -20,7 +19,6 @@ export interface SaveData {
 const STORAGE_KEY = 'semillas_de_vida_save_v2';
 
 const DEFAULT_SAVE: SaveData = {
-  ageGroup: 'young',
   characterId: 'lamb',
   muted: false,
   musicEnabled: true,
@@ -41,7 +39,6 @@ export function loadSaveData(): SaveData {
         ? parsed.characterId
         : 'lamb';
     return {
-      ageGroup: parsed.ageGroup === 'explorer' ? 'explorer' : 'young',
       characterId: charId,
       muted: Boolean(parsed.muted),
       musicEnabled: parsed.musicEnabled !== false,

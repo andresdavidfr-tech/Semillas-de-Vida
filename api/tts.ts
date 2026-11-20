@@ -286,7 +286,6 @@ export default async function handler(req: TtsRequest, res: TtsResponse) {
 
     const text = parsedBody.text;
     const characterId = parsedBody.characterId;
-    const ageGroup = parsedBody.ageGroup;
 
     if (!text || typeof text !== 'string' || text.trim().length === 0) {
       return res.status(400).json({ error: 'Texto requerido para narración.' });
@@ -297,9 +296,8 @@ export default async function handler(req: TtsRequest, res: TtsResponse) {
       typeof characterId === 'string' && CHARACTER_VOICE_MAP[characterId]
         ? characterId
         : 'lamb';
-    const isYoung = ageGroup === 'young';
 
-    const cacheKey = `${charKey}:${isYoung ? 'young' : 'explorer'}:${cleanText}`;
+    const cacheKey = `${charKey}:${cleanText}`;
     const cached = ttsCache.get(cacheKey);
     if (cached) {
       return res.status(200).json(cached);
@@ -330,9 +328,8 @@ export default async function handler(req: TtsRequest, res: TtsResponse) {
     // 2. Optional Gemini TTS if GEMINI_API_KEY is configured
     if (!result && process.env.GEMINI_API_KEY) {
       try {
-        const paceNote = isYoung
-          ? 'Habla un poco más despacio, articulando cada palabra con ternura para niños de 6 a 8 años.'
-          : 'Habla a un ritmo natural, claro y expresivo para niños de 9 a 11 años.';
+        const paceNote =
+          'Habla con ritmo claro, amigable y expresivo, articulando bien cada palabra para niños.';
         const audioBase64 = await synthesizeWithGemini(
           process.env.GEMINI_API_KEY,
           cleanText,

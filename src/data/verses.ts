@@ -1,5 +1,3 @@
-export type AgeGroup = 'young' | 'explorer';
-
 export type RewardIconKey =
   | 'sun'
   | 'lamp'
@@ -29,7 +27,7 @@ export interface VerseLevel {
   reference: string;
   verseText: string;
   kidNote: string;
-  youngChunks: string[];
+  orderChunks: string[];
   blankWordsStep1: string[];
   blankWordsStep3: string[];
   distractors: string[];
@@ -65,7 +63,7 @@ export const WORLDS: WorldInfo[] = [
   {
     id: 4,
     title: 'La Palabra y el Fruto',
-    subtitle: 'Desafíos para grandes exploradores',
+    subtitle: 'Tesoros eternos en tu corazón',
     themeColor: '#3B2F63',
   },
 ];
@@ -78,7 +76,7 @@ export const VERSE_LEVELS: VerseLevel[] = [
     reference: 'Génesis 1:1',
     verseText: 'En el principio creó Dios los cielos y la tierra.',
     kidNote: 'Antes de que existiera nada, Dios ya estaba allí y creó un mundo hermoso para nosotros.',
-    youngChunks: ['En el principio', 'creó Dios', 'los cielos', 'y la tierra.'],
+    orderChunks: ['En el principio', 'creó Dios', 'los cielos', 'y la tierra.'],
     blankWordsStep1: ['principio', 'Dios', 'tierra'],
     blankWordsStep3: ['principio', 'creó', 'cielos', 'tierra'],
     distractors: ['noche', 'mar'],
@@ -97,7 +95,7 @@ export const VERSE_LEVELS: VerseLevel[] = [
     reference: 'Juan 1:4',
     verseText: 'En Él estaba la vida, y la vida era la luz de los hombres.',
     kidNote: 'Cuando recibimos a Jesús en nuestro corazón, Su vida brilla dentro de nosotros como una luz.',
-    youngChunks: ['En Él', 'estaba la vida,', 'y la vida', 'era la luz', 'de los hombres.'],
+    orderChunks: ['En Él', 'estaba la vida,', 'y la vida', 'era la luz', 'de los hombres.'],
     blankWordsStep1: ['vida', 'luz', 'hombres'],
     blankWordsStep3: ['Él', 'vida', 'luz', 'hombres'],
     distractors: ['camino', 'nube'],
@@ -116,7 +114,7 @@ export const VERSE_LEVELS: VerseLevel[] = [
     reference: '1 Juan 4:8',
     verseText: 'El que no ama, no ha conocido a Dios; porque Dios es amor.',
     kidNote: 'Dios no solo nos da cosas buenas: ¡Su propia naturaleza es amor!',
-    youngChunks: ['El que no ama,', 'no ha conocido', 'a Dios;', 'porque Dios', 'es amor.'],
+    orderChunks: ['El que no ama,', 'no ha conocido', 'a Dios;', 'porque Dios', 'es amor.'],
     blankWordsStep1: ['ama', 'Dios', 'amor'],
     blankWordsStep3: ['ama', 'conocido', 'Dios', 'amor'],
     distractors: ['temor', 'fuerza'],
@@ -135,7 +133,7 @@ export const VERSE_LEVELS: VerseLevel[] = [
     reference: 'Salmos 23:1',
     verseText: 'Jehová es mi Pastor; nada me faltará.',
     kidNote: 'Así como un buen pastor cuida a sus ovejitas, el Señor cuida cada paso que das.',
-    youngChunks: ['Jehová es', 'mi Pastor;', 'nada me', 'faltará.'],
+    orderChunks: ['Jehová es', 'mi Pastor;', 'nada me', 'faltará.'],
     blankWordsStep1: ['Jehová', 'Pastor', 'faltará'],
     blankWordsStep3: ['Jehová', 'Pastor', 'nada', 'faltará'],
     distractors: ['amigo', 'sobrará'],
@@ -154,7 +152,7 @@ export const VERSE_LEVELS: VerseLevel[] = [
     reference: 'Juan 14:6',
     verseText: 'Jesús le dijo: Yo soy el camino, y la realidad, y la vida; nadie viene al Padre sino por Mí.',
     kidNote: 'Jesús mismo es el camino real que nos lleva directamente al abrazo de Dios Padre.',
-    youngChunks: [
+    orderChunks: [
       'Jesús le dijo:',
       'Yo soy el camino,',
       'y la realidad,',
@@ -180,7 +178,7 @@ export const VERSE_LEVELS: VerseLevel[] = [
     reference: 'Romanos 10:13',
     verseText: 'Porque todo aquel que invoque el nombre del Señor, será salvo.',
     kidNote: 'Invocar es llamar en voz alta al Señor: "¡Oh Señor Jesús!" Él siempre escucha.',
-    youngChunks: ['Porque todo aquel', 'que invoque', 'el nombre del Señor,', 'será salvo.'],
+    orderChunks: ['Porque todo aquel', 'que invoque', 'el nombre del Señor,', 'será salvo.'],
     blankWordsStep1: ['invoque', 'nombre', 'salvo'],
     blankWordsStep3: ['aquel', 'invoque', 'nombre', 'salvo'],
     distractors: ['escuche', 'cielo'],
@@ -199,7 +197,7 @@ export const VERSE_LEVELS: VerseLevel[] = [
     reference: 'Efesios 6:1',
     verseText: 'Hijos, obedeced en el Señor a vuestros padres, porque esto es justo.',
     kidNote: 'Obedecer a mamá y papá con alegría agrada mucho al corazón del Señor.',
-    youngChunks: ['Hijos, obedeced', 'en el Señor', 'a vuestros padres,', 'porque esto', 'es justo.'],
+    orderChunks: ['Hijos, obedeced', 'en el Señor', 'a vuestros padres,', 'porque esto', 'es justo.'],
     blankWordsStep1: ['obedeced', 'padres', 'justo'],
     blankWordsStep3: ['Hijos', 'obedeced', 'Señor', 'padres', 'justo'],
     distractors: ['jugad', 'amigos'],
@@ -218,7 +216,7 @@ export const VERSE_LEVELS: VerseLevel[] = [
     reference: 'Filipenses 4:4',
     verseText: 'Regocijaos en el Señor siempre. Otra vez digo: ¡Regocijaos!',
     kidNote: 'Nuestra alegría verdadera no depende de las cosas, sino de estar unidos al Señor.',
-    youngChunks: ['Regocijaos', 'en el Señor', 'siempre.', 'Otra vez digo:', '¡Regocijaos!'],
+    orderChunks: ['Regocijaos', 'en el Señor', 'siempre.', 'Otra vez digo:', '¡Regocijaos!'],
     blankWordsStep1: ['Regocijaos', 'Señor', 'siempre'],
     blankWordsStep3: ['Regocijaos', 'Señor', 'siempre', 'digo'],
     distractors: ['nunca', 'llorad'],
@@ -237,7 +235,7 @@ export const VERSE_LEVELS: VerseLevel[] = [
     reference: 'Filipenses 4:13',
     verseText: 'Todo lo puedo en Aquel que me reviste de poder.',
     kidNote: 'Cuando algo parece difícil, Cristo vive en nosotros para darnos Su fuerza.',
-    youngChunks: ['Todo lo puedo', 'en Aquel', 'que me reviste', 'de poder.'],
+    orderChunks: ['Todo lo puedo', 'en Aquel', 'que me reviste', 'de poder.'],
     blankWordsStep1: ['Todo', 'Aquel', 'poder'],
     blankWordsStep3: ['Todo', 'puedo', 'reviste', 'poder'],
     distractors: ['miedo', 'sueño'],
@@ -256,7 +254,7 @@ export const VERSE_LEVELS: VerseLevel[] = [
     reference: 'Salmos 119:105',
     verseText: 'Lámpara es a mis pies Tu palabra, y lumbrera a mi camino.',
     kidNote: 'La Biblia ilumina nuestro caminar para que nunca tropecemos en la oscuridad.',
-    youngChunks: ['Lámpara es', 'a mis pies', 'Tu palabra,', 'y lumbrera', 'a mi camino.'],
+    orderChunks: ['Lámpara es', 'a mis pies', 'Tu palabra,', 'y lumbrera', 'a mi camino.'],
     blankWordsStep1: ['Lámpara', 'palabra', 'camino'],
     blankWordsStep3: ['Lámpara', 'pies', 'palabra', 'lumbrera', 'camino'],
     distractors: ['piedra', 'valle'],
@@ -275,7 +273,7 @@ export const VERSE_LEVELS: VerseLevel[] = [
     reference: '2 Timoteo 3:16',
     verseText: 'Toda la Escritura es aliento de Dios, y útil para enseñar, para redargüir, para corregir, para instruir en justicia.',
     kidNote: 'Cada vez que leemos la Biblia con fe, ¡respiramos el aliento fresco de Dios!',
-    youngChunks: [
+    orderChunks: [
       'Toda la Escritura',
       'es aliento de Dios,',
       'y útil para enseñar,',
@@ -301,7 +299,7 @@ export const VERSE_LEVELS: VerseLevel[] = [
     reference: 'Juan 3:16',
     verseText: 'Porque de tal manera amó Dios al mundo, que ha dado a Su Hijo unigénito, para que todo aquel que en Él cree, no perezca, mas tenga vida eterna.',
     kidNote: 'El regalo más grande de la historia: Dios dio a Su Hijo para darnos Su vida eterna.',
-    youngChunks: [
+    orderChunks: [
       'Porque de tal manera',
       'amó Dios al mundo,',
       'que ha dado a Su Hijo unigénito,',

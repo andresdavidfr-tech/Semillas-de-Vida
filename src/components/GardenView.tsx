@@ -58,7 +58,6 @@ export const GardenView: React.FC<GardenViewProps> = ({ save, onBack, onPlayLeve
     setSpeechError(null);
     void sound.speakVerse(lvl.reference, lvl.verseText, {
       characterId: character.id,
-      ageGroup: save.ageGroup,
       onLoading: () => setSpeechLoading(true),
       onStart: () => {
         setSpeechLoading(false);

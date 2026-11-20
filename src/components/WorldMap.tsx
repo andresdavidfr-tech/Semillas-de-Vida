@@ -1,6 +1,6 @@
 import React from 'react';
 import { ArrowLeft, Lock, Sprout, Star, Volume2, VolumeX, Music, Unlock, Play } from 'lucide-react';
-import { AgeGroup, VERSE_LEVELS, WORLDS, VerseLevel } from '../data/verses';
+import { VERSE_LEVELS, WORLDS, VerseLevel } from '../data/verses';
 import { CharacterId, GAME_CHARACTERS, getCharacterById } from '../data/characters';
 import {
   SaveData,
@@ -17,7 +17,6 @@ interface WorldMapProps {
   onSelectLevel: (level: VerseLevel) => void;
   onOpenGarden: () => void;
   onBackTitle: () => void;
-  onChangeAgeGroup: (group: AgeGroup) => void;
   onChangeCharacter: (id: CharacterId) => void;
   onToggleMute: () => void;
   onToggleMusic: () => void;
@@ -29,7 +28,6 @@ export const WorldMap: React.FC<WorldMapProps> = ({
   onSelectLevel,
   onOpenGarden,
   onBackTitle,
-  onChangeAgeGroup,
   onChangeCharacter,
   onToggleMute,
   onToggleMusic,
@@ -67,31 +65,6 @@ export const WorldMap: React.FC<WorldMapProps> = ({
           </div>
 
           <div className="flex items-center gap-2.5 sm:gap-4 flex-wrap">
-            {/* Age Mode Switch */}
-            <div className="hidden md:flex items-center bg-white/10 rounded-xl p-1 gap-1">
-              <button
-                type="button"
-                onClick={() => onChangeAgeGroup('young')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer whitespace-nowrap ${
-                  save.ageGroup === 'young'
-                    ? 'bg-white text-[#1B4332]'
-                    : 'text-emerald-100 hover:text-white'
-                }`}
-              >
-                6–8 años
-              </button>
-              <button
-                type="button"
-                onClick={() => onChangeAgeGroup('explorer')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer whitespace-nowrap ${
-                  save.ageGroup === 'explorer'
-                    ? 'bg-white text-[#1B4332]'
-                    : 'text-emerald-100 hover:text-white'
-                }`}
-              >
-                9–11 años
-              </button>
-            </div>
 
             <div className="flex items-center gap-4 text-sm font-bold font-mono tabular-nums px-2">
               <span className="inline-flex items-center gap-1.5 text-amber-300">
